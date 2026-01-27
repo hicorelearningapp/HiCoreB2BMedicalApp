@@ -40,9 +40,7 @@ class CustomerInvoiceBase(BaseModel):
     PaymentStatus: Optional[str]
     PaymentMode: Optional[str]
     PaymentTransactionId: Optional[str]
-    CreatedBy: Optional[str]
-    UpdatedBy: Optional[str]
-
+    
     class Config:
         from_attributes = True
 

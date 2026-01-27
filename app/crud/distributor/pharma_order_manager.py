@@ -71,7 +71,23 @@ class PharmaOrderManager:
     # ------------------------------------------------------------
     # 🟢 Get All Orders (optional filter by distributor)
     # ------------------------------------------------------------
-    async def get_all_orders(self, distributor_id: Optional[int] = None) -> List[dict]:
+    async def get_all_orders_by_distributor(self, distributor_id: Optional[int] = None) -> List[dict]:
+        try:
+            await self.db_manager.connect()
+            query = {"DistributorId": distributor_id} if distributor_id else None
+            result = await self.db_manager.read(PharmaOrder, query)
+            orders = [PharmaOrderRead.from_orm(o).dict() for o in result]
+            return orders
+        except Exception as e:
+            logger.error(f"❌ Error fetching orders: {e}")
+            return {"success": False, "message": f"Error fetching orders: {e}"}
+        finally:
+            await self.db_manager.disconnect()
+
+    # ------------------------------------------------------------
+    # 🟢 Get All Orders (optional filter by pharma)
+    # ------------------------------------------------------------
+    async def get_all_orders_by_pharma(self, distributor_id: Optional[int] = None) -> List[dict]:
         try:
             await self.db_manager.connect()
             query = {"DistributorId": distributor_id} if distributor_id else None

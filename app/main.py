@@ -3,6 +3,10 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
 
+from .api.retailer.medicine_api import MedicineAPI
+from .api.retailer.customer_order_api import router as customer_orders
+
+
 # Retailer
 from .api.retailer.retailer_api import RetailerAPI
 from .api.retailer.retailer_inventory_api import RetailerInventoryAPI
@@ -38,6 +42,7 @@ app.add_middleware(
 app.mount("/Images", StaticFiles(directory="Images"), name="Images")
 
 
+medicine_api = MedicineAPI()
 
 # Retailer
 retailer_api = RetailerAPI()
@@ -54,7 +59,7 @@ retailer_notification_api = RetailerNotificationAPI()
 distributor_api = DistributorAPI()
 distributor_notification_api = DistributorNotificationAPI()
 distributor_inventory_api = DistributorInventoryAPI()
-distributor_order_api = DistributorAPI()
+# distributor_order_api = DistributorAPI()
 retailer_invoice_api = RetailerInvoiceAPI()
 distributor_report_api = DistributorReportAPI()
 distributor_dashboard_api = DistributorDashboardAPI()
@@ -63,13 +68,17 @@ pharma_order_api = PharmaOrderAPI()
 
 
 
+app.include_router(medicine_api.router, tags=["Medicine"])
+app.include_router(customer_orders)
+
+
 # Retailer
-app.include_router(retailer_dashboard_api.router, tags=["Retailer Dashboard"])
+# app.include_router(retailer_dashboard_api.router, tags=["Retailer Dashboard"])
 # app.include_router(retailer_inventory_api.router, tags=["Retailer Inventory"])
 app.include_router(retailer_order_api.router, tags=["Retailer Orders"])
 app.include_router(retailer_order_item_api.router, tags=["Retailer Order Items"])
 app.include_router(customer_invoice_api.router, tags=["Retailer Invoices"])
-app.include_router(retailer_report_api.router, tags=["Retailer Reports"])
+# app.include_router(retailer_report_api.router, tags=["Retailer Reports"])
 app.include_router(retailer_api.router, tags=["Retailer"])
 app.include_router(retailer_notification_api.router, tags=["Retailer Notifications"])
 
@@ -79,11 +88,11 @@ app.include_router(retailer_notification_api.router, tags=["Retailer Notificatio
 app.include_router(distributor_api.router, tags=["Distributor"])
 app.include_router(distributor_notification_api.router, tags=["Distributor Notification"])
 # app.include_router(distributor_inventory_api.router, tags=["Distributor Inventory"])
-app.include_router(distributor_order_api.router, tags=["Distributor Orders"])
+# app.include_router(distributor_order_api.router, tags=["Distributor Orders"])
 app.include_router(retailer_invoice_api.router, tags=["Distributor Invoices"])
 app.include_router(distributor_report_api.router, tags=["Distributor Report"])
 app.include_router(distributor_dashboard_api.router, tags=["Distributor Dashboard"])
-# app.include_router(pharma_order_api.router, tags=["Pharma Orders"])
+app.include_router(pharma_order_api.router, tags=["Pharma Orders"])
 
 
 

@@ -24,9 +24,7 @@ class CustomerInvoice(Base):
 
     CreatedAt = Column(DateTime, default=ist_now)
     UpdatedAt = Column(DateTime, default=ist_now, onupdate=ist_now)
-    CreatedBy = Column(String, nullable=True)
-    UpdatedBy = Column(String, nullable=True)
-
+    
 
 class CustomerInvoiceItem(Base):
     __tablename__ = "CustomerInvoiceItem"

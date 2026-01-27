@@ -1,8 +1,9 @@
-from typing import List, Dict
+from typing import Dict
 from datetime import datetime
 from ...db.base.database_manager import DatabaseManager
 from ...models.retailer.retailer_order_model import RetailerOrder
-from ...models.distributor.distributor_inventory_model import DistributorInventory
+from ...models.retailer.retailer_model import Retailer
+
 
 class DistributorDashboardManager:
     def __init__(self, db_type: str):
@@ -12,53 +13,45 @@ class DistributorDashboardManager:
         await self.db_manager.connect()
 
         try:
-            # ----------------------
-            # Today's sales
-            # ----------------------
             today = datetime.today().date()
-            orders = await self.db_manager.read(RetailerOrder, {"DistributorId": distributor_id})
+
+            # Fetch all orders for the distributor
+            orders = await self.db_manager.read(
+                RetailerOrder, {"DistributorId": distributor_id}
+            )
+
             orders_today = [o for o in orders if o.OrderDateTime.date() == today]
-            today_sales = sum(o.Amount for o in orders_today)
-            new_orders_count = len([o for o in orders_today if o.OrderStage == "New"])
+            new_orders = [o for o in orders_today if o.OrderStage == "New"]
 
-            # ----------------------
-            # New Orders List
-            # ----------------------
-            new_orders_list = [
-                {"OrderID": o.OrderId, "RetailerName": o.RetailerName, "Price": o.Amount}
-                for o in orders_today if o.OrderStage == "New"
-            ]
+            # Fetch all retailers for the distributor
+            # This avoids passing lists to SQLite
+            retailers = await self.db_manager.read(
+                Retailer, {}
+            )
 
-            # ----------------------
-            # Recent Orders List
-            # ----------------------
-            recent_orders = await self.db_manager.read(RetailerOrder, {"DistributorId": distributor_id})
-            recent_orders_list = [
-                {"OrderID": o.OrderId, "RetailerName": o.RetailerName, "Price": o.Amount, "Status": o.OrderStatus}
-                for o in recent_orders
-            ]
-
-            # ----------------------
-            # Low Stock Medicines
-            # ----------------------
-            # low_stock_meds = await self.db_manager.read(DistributorInventory, {"DistributorId": distributor_id})
-            # low_stock_list = [
-            #     {
-            #         "MedicineName": m.MedicineName,
-            #         "MinStock": m.MinStock,
-            #         "Stock": m.Quantity,
-            #         "ExpiryDate": m.ExpiryDate.strftime("%d-%m-%Y")
-            #     }
-            #     for m in low_stock_meds if m.Quantity < m.MinStock
-            # ]
+            # Map RetailerId -> RetailerName
+            retailer_map = {r.RetailerId: r.OwnerName for r in retailers}
 
             return {
-                "TodaySales": today_sales,
-                "NewOrders": new_orders_count,
-                # "LowStockCount": len(low_stock_list),
-                "NewOrdersList": new_orders_list,
-                "RecentOrders": recent_orders_list,
-                # "LowStock": low_stock_list
+                "TodaySales": sum(o.Amount for o in orders_today),
+                "NewOrders": len(new_orders),
+                "NewOrdersList": [
+                    {
+                        "OrderID": o.OrderId,
+                        "RetailerName": retailer_map.get(o.RetailerId, "Unknown"),
+                        "Price": o.Amount
+                    }
+                    for o in new_orders
+                ],
+                "RecentOrders": [
+                    {
+                        "OrderID": o.OrderId,
+                        "RetailerName": retailer_map.get(o.RetailerId, "Unknown"),
+                        "Price": o.Amount,
+                        "Status": o.OrderStatus
+                    }
+                    for o in orders
+                ]
             }
 
         finally:

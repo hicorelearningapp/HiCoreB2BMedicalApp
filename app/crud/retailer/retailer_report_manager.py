@@ -1,5 +1,5 @@
 from collections import defaultdict
-from ...models.customer.order_model import Order, OrderItem
+# from ...models.customer.order_model import Order, OrderItem
 from ...models.retailer.customer_invoice_model import CustomerInvoice
 from ...db.base.database_manager import DatabaseManager
 from ...schemas.retailer.retailer_report_schema import RetailerSalesDashboard, RetailerTopSellingProduct

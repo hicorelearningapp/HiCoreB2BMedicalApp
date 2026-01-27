@@ -4,65 +4,79 @@ from datetime import datetime
 from ...utils.timezone import ist_now
 
 
-# -------------------------------
-# Pharma Order Item Schema
-# -------------------------------
+# =====================================================
+# PHARMA ORDER ITEM SCHEMAS
+# =====================================================
 class PharmaOrderItemBase(BaseModel):
     PONumber: Optional[int]
     DistributorId: Optional[int]
-    InventoryId: Optional[int]
+
+    MedicineName: str
+    Brand: Optional[str]
+    Quantity: int
+    Price: Optional[float]
+    TotalAmount: Optional[float]
+    Batch: Optional[str]
+    ExpiryDate: Optional[datetime]
+
+
+class PharmaOrderItemCreate(PharmaOrderItemBase):
+    pass
+
+
+class PharmaOrderItemUpdate(BaseModel):
     MedicineName: Optional[str]
     Brand: Optional[str]
     Quantity: Optional[int]
     Price: Optional[float]
     TotalAmount: Optional[float]
     Batch: Optional[str]
-    ExpiryDate: Optional[datetime] = Field(default_factory=ist_now)
-
-    class Config:
-        from_attributes = True
-
-
-class PharmaOrderItemCreate(PharmaOrderItemBase):
-    MedicineName: str
-    Quantity: int
+    ExpiryDate: Optional[datetime]
 
 
 class PharmaOrderItemRead(PharmaOrderItemBase):
     ItemId: int
-    CreatedAt: datetime = Field(default_factory=ist_now)
-
-
-# -------------------------------
-# Pharma Order Schema
-# -------------------------------
-class PharmaOrderBase(BaseModel):
-    DistributorId: Optional[int]
-    PharmaName: Optional[str]
-    OrderDate: Optional[datetime] = Field(default_factory=ist_now)
-    ExpectedDelivery: Optional[datetime] = Field(default_factory=ist_now)
-    TotalItems: Optional[int]
-    TotalAmount: Optional[float]
-    Status: Optional[str]
-    CreatedBy: Optional[str]
-    UpdatedBy: Optional[str]
+    CreatedAt: datetime
 
     class Config:
         from_attributes = True
 
 
+# =====================================================
+# PHARMA ORDER SCHEMAS
+# =====================================================
+class PharmaOrderBase(BaseModel):
+    DistributorId: Optional[int]
+    PharmaId: Optional[int]
+
+    OrderDate: Optional[datetime] = Field(default_factory=ist_now)
+    ExpectedDelivery: Optional[datetime]
+
+    TotalItems: Optional[int]
+    TotalAmount: Optional[float]
+
+    Status: Optional[str] = "Placed"
+
+    CreatedAt: Optional[datetime] = Field(default_factory=ist_now)
+    UpdatedAt: Optional[datetime] = Field(default_factory=ist_now)
+    CreatedBy: Optional[str]
+    UpdatedBy: Optional[str]
+
+
 class PharmaOrderCreate(PharmaOrderBase):
     DistributorId: int
-    PharmaName: str
-    Items: List[PharmaOrderItemCreate]
+    PharmaId: int
 
 
-class PharmaOrderUpdate(PharmaOrderBase):
-    pass
+class PharmaOrderUpdate(BaseModel):
+    ExpectedDelivery: Optional[datetime]
+    Status: Optional[str]
+    UpdatedBy: Optional[str]
 
 
 class PharmaOrderRead(PharmaOrderBase):
     PONumber: int
-    CreatedAt: datetime = Field(default_factory=ist_now)
-    UpdatedAt: datetime = Field(default_factory=ist_now)
-    Items: Optional[List[PharmaOrderItemRead]]
+    Items: Optional[List[PharmaOrderItemRead]] = []
+
+    class Config:
+        from_attributes = True

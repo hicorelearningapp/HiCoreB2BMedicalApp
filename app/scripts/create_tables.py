@@ -21,7 +21,7 @@ class TableCreator:
         sql = """
         CREATE TABLE IF NOT EXISTS Medicine (
             MedicineId INTEGER PRIMARY KEY AUTOINCREMENT,
-            Name TEXT NOT NULL,
+            MedicineName TEXT NOT NULL,
             GenericName TEXT,
             DosageForm TEXT,
             Strength TEXT,
@@ -173,9 +173,7 @@ class TableCreator:
             PaymentMode TEXT,
             PaymentTransactionId TEXT,
             CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-            UpdatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-            CreatedBy TEXT,
-            UpdatedBy TEXT
+            UpdatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
         );
         """
         item_sql = """
@@ -316,6 +314,52 @@ class TableCreator:
         );
         """
         self._execute(sql, "DistributorNotification")
+
+    
+    # ------------------------------------------------------------------
+    # PharmaOrder & PharmaOrderItem
+    # ------------------------------------------------------------------
+    def create_pharma_order_tables(self):
+        order_sql = """
+        CREATE TABLE IF NOT EXISTS PharmaOrder (
+            PONumber INTEGER PRIMARY KEY,
+            DistributorId INTEGER NOT NULL,
+            PharmaId INTEGER NOT NULL,
+
+            OrderDate DATETIME DEFAULT CURRENT_TIMESTAMP,
+            ExpectedDelivery DATETIME,
+
+            TotalItems INTEGER,
+            TotalAmount FLOAT,
+
+            Status TEXT DEFAULT 'Placed',
+
+            CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+            UpdatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+        """
+
+        item_sql = """
+
+        CREATE TABLE IF NOT EXISTS PharmaOrderItem (
+            ItemId INTEGER PRIMARY KEY AUTOINCREMENT,
+            PONumber INTEGER NOT NULL,
+            DistributorId INTEGER NOT NULL,
+
+            MedicineName TEXT NOT NULL,
+            Brand TEXT,
+            Quantity INTEGER NOT NULL,
+            Price FLOAT,
+            TotalAmount FLOAT,
+            Batch TEXT,
+            ExpiryDate DATETIME,
+
+            CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+        """
+        self._execute(order_sql, "PharmaOrder")
+        self._execute(item_sql, "PharmaOrderItem")
+
 
 
     def add_column_if_not_exists(self, table: str, column: str, datatype: str):
@@ -471,18 +515,19 @@ class TableCreator:
         self.create_medicine_table()
 
         # Retailer tables
-        self.create_retailer_table()
+        # self.create_retailer_table()
         # self.create_retailer_inventory_table()
         # self.create_retailer_notification_table()
-        self.create_retailer_order_tables()
-        self.create_customer_invoice_tables()
+        # self.create_retailer_order_tables()
+        # self.create_customer_invoice_tables()
 
 
         # Distributor tables
-        self.create_distributor_table()
+        # self.create_distributor_table()
         # self.create_distributor_inventory_table()
         # self.create_distributor_notification_table()
-        self.create_retailer_invoice_tables()
+        # self.create_retailer_invoice_tables()
+        # self.create_pharma_order_tables()
 
 
         # self.add_column_if_not_exists("RetailerOrders", "RetailerName", "TEXT")
@@ -491,15 +536,16 @@ class TableCreator:
 
 
         # tables = [
-        #     "MedicineType", "MedicineCategory", "Medicine", "Customer", "Address", "Retailer",
-        #     "Orders", "OrderItem", "RetailerNotification", "CustomerInvoice", "CustomerInvoiceItem",
-        #     "RetailerOrders", "RetailerOrderItem", "Prescription", "CustomerNotification",
-        #     "DistributorNotification", "RetailerInvoice", "RetailerInvoiceItem", "Lab",
+        #     "MedicineType", "MedicineCategory", "Medicine", "Customer", "Address",
+        #     "Orders", "OrderItem", "Prescription", "CustomerNotification", "Lab",
         #     "Doctor", "MedicalFacility", "MedicalLab"
         # ]
 
         # for table in tables:
         #     self.remove_table_if_exists(table)
+
+        
+        # self.remove_table_if_exists("PharmaOrderItem")
 
 
 
@@ -510,3 +556,150 @@ if __name__ == "__main__":
     creator = TableCreator(sqlite_url)
     creator.create_all_tables()
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# sample_medicines = [
+#     {
+#         "MedicineName": "Paracetamol",
+#         "GenericName": "Acetaminophen",
+#         "DosageForm": "Tablet",
+#         "Strength": "500mg",
+#         "Manufacturer": "ABC Pharma",
+#         "PrescriptionRequired": False,
+#         "Size": "10 Tablets",
+#         "UnitPrice": 20.0,
+#         "TherapeuticClass": "Analgesic",
+#         "ImgUrl": None,
+#         "MedicineCategoryId": 1
+#     },
+#     {
+#         "MedicineName": "Amoxicillin",
+#         "GenericName": "Amoxicillin",
+#         "DosageForm": "Capsule",
+#         "Strength": "250mg",
+#         "Manufacturer": "XYZ Pharma",
+#         "PrescriptionRequired": True,
+#         "Size": "15 Capsules",
+#         "UnitPrice": 45.5,
+#         "TherapeuticClass": "Antibiotic",
+#         "ImgUrl": None,
+#         "MedicineCategoryId": 2
+#     },
+#     {
+#         "MedicineName": "Ibuprofen",
+#         "GenericName": "Ibuprofen",
+#         "DosageForm": "Tablet",
+#         "Strength": "400mg",
+#         "Manufacturer": "MediLife",
+#         "PrescriptionRequired": False,
+#         "Size": "20 Tablets",
+#         "UnitPrice": 35.0,
+#         "TherapeuticClass": "Anti-inflammatory",
+#         "ImgUrl": None,
+#         "MedicineCategoryId": 1
+#     },
+#     {
+#         "MedicineName": "Cetirizine",
+#         "GenericName": "Cetirizine",
+#         "DosageForm": "Tablet",
+#         "Strength": "10mg",
+#         "Manufacturer": "HealthCorp",
+#         "PrescriptionRequired": False,
+#         "Size": "10 Tablets",
+#         "UnitPrice": 25.0,
+#         "TherapeuticClass": "Antihistamine",
+#         "ImgUrl": None,
+#         "MedicineCategoryId": 3
+#     },
+#     {
+#         "MedicineName": "Metformin",
+#         "GenericName": "Metformin Hydrochloride",
+#         "DosageForm": "Tablet",
+#         "Strength": "500mg",
+#         "Manufacturer": "Global Pharma",
+#         "PrescriptionRequired": True,
+#         "Size": "30 Tablets",
+#         "UnitPrice": 50.0,
+#         "TherapeuticClass": "Antidiabetic",
+#         "ImgUrl": None,
+#         "MedicineCategoryId": 4
+#     },
+#     {
+#         "MedicineName": "Atorvastatin",
+#         "GenericName": "Atorvastatin Calcium",
+#         "DosageForm": "Tablet",
+#         "Strength": "20mg",
+#         "Manufacturer": "HeartCare",
+#         "PrescriptionRequired": True,
+#         "Size": "10 Tablets",
+#         "UnitPrice": 60.0,
+#         "TherapeuticClass": "Cholesterol-lowering",
+#         "ImgUrl": None,
+#         "MedicineCategoryId": 5
+#     },
+#     {
+#         "MedicineName": "Omeprazole",
+#         "GenericName": "Omeprazole",
+#         "DosageForm": "Capsule",
+#         "Strength": "20mg",
+#         "Manufacturer": "DigestWell",
+#         "PrescriptionRequired": True,
+#         "Size": "14 Capsules",
+#         "UnitPrice": 40.0,
+#         "TherapeuticClass": "Proton Pump Inhibitor",
+#         "ImgUrl": None,
+#         "MedicineCategoryId": 6
+#     },
+#     {
+#         "MedicineName": "Salbutamol Inhaler",
+#         "GenericName": "Salbutamol",
+#         "DosageForm": "Inhaler",
+#         "Strength": "100mcg",
+#         "Manufacturer": "BreatheEasy",
+#         "PrescriptionRequired": True,
+#         "Size": "1 Inhaler",
+#         "UnitPrice": 150.0,
+#         "TherapeuticClass": "Bronchodilator",
+#         "ImgUrl": None,
+#         "MedicineCategoryId": 7
+#     },
+#     {
+#         "MedicineName": "Ranitidine",
+#         "GenericName": "Ranitidine",
+#         "DosageForm": "Tablet",
+#         "Strength": "150mg",
+#         "Manufacturer": "StomachCare",
+#         "PrescriptionRequired": True,
+#         "Size": "10 Tablets",
+#         "UnitPrice": 30.0,
+#         "TherapeuticClass": "H2 Receptor Antagonist",
+#         "ImgUrl": None,
+#         "MedicineCategoryId": 6
+#     },
+#     {
+#         "MedicineName": "Vitamin C",
+#         "GenericName": "Ascorbic Acid",
+#         "DosageForm": "Tablet",
+#         "Strength": "500mg",
+#         "Manufacturer": "NutriLife",
+#         "PrescriptionRequired": False,
+#         "Size": "30 Tablets",
+#         "UnitPrice": 25.0,
+#         "TherapeuticClass": "Vitamin Supplement",
+#         "ImgUrl": None,
+#         "MedicineCategoryId": 8
+#     }
+# ]

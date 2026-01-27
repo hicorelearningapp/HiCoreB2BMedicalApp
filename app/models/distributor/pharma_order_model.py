@@ -8,7 +8,7 @@ class PharmaOrder(Base):
 
     PONumber = Column(Integer, primary_key=True, index=True)
     DistributorId = Column(Integer, nullable=False)
-    PharmaName = Column(String, nullable=False)
+    PharmaId = Column(Integer, nullable=False)  # 🔁 changed from PharmaName
 
     OrderDate = Column(DateTime, default=ist_now)
     ExpectedDelivery = Column(DateTime, nullable=True)
@@ -20,8 +20,6 @@ class PharmaOrder(Base):
 
     CreatedAt = Column(DateTime, default=ist_now)
     UpdatedAt = Column(DateTime, default=ist_now, onupdate=ist_now)
-    CreatedBy = Column(String, nullable=True)
-    UpdatedBy = Column(String, nullable=True)
 
 
 class PharmaOrderItem(Base):
@@ -30,7 +28,6 @@ class PharmaOrderItem(Base):
     ItemId = Column(Integer, primary_key=True, index=True)
     PONumber = Column(Integer, nullable=False)
     DistributorId = Column(Integer, nullable=False)
-    InventoryId = Column(Integer, nullable=True)
 
     MedicineName = Column(String, nullable=False)
     Brand = Column(String, nullable=True)
