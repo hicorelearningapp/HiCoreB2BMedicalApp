@@ -22,7 +22,6 @@ class TableCreator:
         CREATE TABLE IF NOT EXISTS Medicine (
             MedicineId INTEGER PRIMARY KEY AUTOINCREMENT,
             MedicineName TEXT NOT NULL,
-            GenericName TEXT,
             DosageForm TEXT,
             Strength TEXT,
             Manufacturer TEXT,
@@ -30,8 +29,7 @@ class TableCreator:
             Size TEXT,
             UnitPrice REAL NOT NULL,
             TherapeuticClass TEXT,
-            ImgUrl TEXT,
-            MedicineCategoryId INTEGER
+            ImgUrl TEXT
         );
         """
         self._execute(sql, "Medicine")
@@ -325,6 +323,7 @@ class TableCreator:
             PONumber INTEGER PRIMARY KEY,
             DistributorId INTEGER NOT NULL,
             PharmaId INTEGER NOT NULL,
+            PharmaName TEXT NOT NULL,
 
             OrderDate DATETIME DEFAULT CURRENT_TIMESTAMP,
             ExpectedDelivery DATETIME,
@@ -345,16 +344,13 @@ class TableCreator:
             ItemId INTEGER PRIMARY KEY AUTOINCREMENT,
             PONumber INTEGER NOT NULL,
             DistributorId INTEGER NOT NULL,
+            PharmaId INTEGER NOT NULL,
 
+            MedicineId INTEGER NOT NULL,
             MedicineName TEXT NOT NULL,
-            Brand TEXT,
             Quantity INTEGER NOT NULL,
             Price FLOAT,
-            TotalAmount FLOAT,
-            Batch TEXT,
-            ExpiryDate DATETIME,
-
-            CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+            TotalAmount FLOAT            
         );
         """
         self._execute(order_sql, "PharmaOrder")
@@ -512,7 +508,7 @@ class TableCreator:
     # ------------------------------------------------------------------
     def create_all_tables(self):       
 
-        self.create_medicine_table()
+        # self.create_medicine_table()
 
         # Retailer tables
         # self.create_retailer_table()
@@ -527,11 +523,11 @@ class TableCreator:
         # self.create_distributor_inventory_table()
         # self.create_distributor_notification_table()
         # self.create_retailer_invoice_tables()
-        # self.create_pharma_order_tables()
+        self.create_pharma_order_tables()
 
 
-        # self.add_column_if_not_exists("RetailerOrders", "RetailerName", "TEXT")
-        # self.remove_column_if_exists("RetailerOrders", "DistributorrName")
+        # self.add_column_if_not_exists("PharmaOrder", "PharmaName", "TEXT")
+        # self.remove_column_if_exists("PharmaOrder", "MedicineCategoryId")
         # self.remove_table_if_exists("Doctor")
 
 
@@ -545,7 +541,7 @@ class TableCreator:
         #     self.remove_table_if_exists(table)
 
         
-        # self.remove_table_if_exists("PharmaOrderItem")
+        # self.remove_table_if_exists("PharmaOrder")
 
 
 

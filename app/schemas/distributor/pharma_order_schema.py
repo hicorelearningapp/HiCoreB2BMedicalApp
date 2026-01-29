@@ -8,36 +8,28 @@ from ...utils.timezone import ist_now
 # PHARMA ORDER ITEM SCHEMAS
 # =====================================================
 class PharmaOrderItemBase(BaseModel):
-    PONumber: Optional[int]
-    DistributorId: Optional[int]
+    PONumber: int
+    DistributorId: int
+    PharmaId: int
 
+    MedicineId: int
     MedicineName: str
-    Brand: Optional[str]
     Quantity: int
-    Price: Optional[float]
-    TotalAmount: Optional[float]
-    Batch: Optional[str]
-    ExpiryDate: Optional[datetime]
-
+    Price: float
+    TotalAmount: float
+    
 
 class PharmaOrderItemCreate(PharmaOrderItemBase):
     pass
 
 
 class PharmaOrderItemUpdate(BaseModel):
-    MedicineName: Optional[str]
-    Brand: Optional[str]
-    Quantity: Optional[int]
-    Price: Optional[float]
-    TotalAmount: Optional[float]
-    Batch: Optional[str]
-    ExpiryDate: Optional[datetime]
-
+    pass
+    
 
 class PharmaOrderItemRead(PharmaOrderItemBase):
     ItemId: int
-    CreatedAt: datetime
-
+    
     class Config:
         from_attributes = True
 
@@ -48,6 +40,7 @@ class PharmaOrderItemRead(PharmaOrderItemBase):
 class PharmaOrderBase(BaseModel):
     DistributorId: Optional[int]
     PharmaId: Optional[int]
+    PharmaName: Optional[str]
 
     OrderDate: Optional[datetime] = Field(default_factory=ist_now)
     ExpectedDelivery: Optional[datetime]
@@ -55,28 +48,25 @@ class PharmaOrderBase(BaseModel):
     TotalItems: Optional[int]
     TotalAmount: Optional[float]
 
-    Status: Optional[str] = "Placed"
+    Status: Optional[str] = "New"
 
     CreatedAt: Optional[datetime] = Field(default_factory=ist_now)
     UpdatedAt: Optional[datetime] = Field(default_factory=ist_now)
-    CreatedBy: Optional[str]
-    UpdatedBy: Optional[str]
+    
 
 
 class PharmaOrderCreate(PharmaOrderBase):
-    DistributorId: int
-    PharmaId: int
+    Items: List[PharmaOrderItemCreate]
 
 
 class PharmaOrderUpdate(BaseModel):
     ExpectedDelivery: Optional[datetime]
     Status: Optional[str]
-    UpdatedBy: Optional[str]
-
+    
 
 class PharmaOrderRead(PharmaOrderBase):
     PONumber: int
-    Items: Optional[List[PharmaOrderItemRead]] = []
+    # Items: Optional[List[PharmaOrderItemRead]] = []
 
     class Config:
         from_attributes = True

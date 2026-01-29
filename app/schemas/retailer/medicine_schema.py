@@ -3,7 +3,6 @@ from typing import Optional
 
 class MedicineBase(BaseModel):
     MedicineName: str
-    GenericName: Optional[str]
     DosageForm: Optional[str]
     Strength: Optional[str]
     Manufacturer: Optional[str]
@@ -12,8 +11,7 @@ class MedicineBase(BaseModel):
     UnitPrice: float
     TherapeuticClass: Optional[str]
     ImgUrl: Optional[str]
-    MedicineCategoryId: Optional[int]
-
+    
     class Config:
         from_attributes = True
 

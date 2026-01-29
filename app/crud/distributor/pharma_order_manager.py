@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from ...utils.timezone import ist_now
 from ...utils.logger import get_logger
 from ...db.base.database_manager import DatabaseManager
@@ -69,34 +69,83 @@ class PharmaOrderManager:
             await self.db_manager.disconnect()
 
     # ------------------------------------------------------------
-    # 🟢 Get All Orders (optional filter by distributor)
+    # 🟢 Get All Orders (filter by distributor)
     # ------------------------------------------------------------
-    async def get_all_orders_by_distributor(self, distributor_id: Optional[int] = None) -> List[dict]:
+
+    async def get_all_orders_by_distributor(self, distributor_id: Optional[int] = None) -> Dict[str, Any]:
         try:
             await self.db_manager.connect()
+
             query = {"DistributorId": distributor_id} if distributor_id else None
             result = await self.db_manager.read(PharmaOrder, query)
+
             orders = [PharmaOrderRead.from_orm(o).dict() for o in result]
-            return orders
+
+            # ---- Status counts ----
+            total_orders = len(orders)
+
+            delivered = sum(1 for o in orders if o.get("Status") == "Delivered")
+            in_transit = sum(1 for o in orders if o.get("Status") == "Intransit")
+            placed = sum(
+                1 for o in orders
+                if o.get("Status") in ("New", "Pending")
+            )
+
+            response = {
+                "TotalOrders": total_orders,
+                "Delivered": delivered,
+                "InTransit": in_transit,
+                "Placed": placed,
+                "Data": orders
+            }
+
+            return response
+
         except Exception as e:
             logger.error(f"❌ Error fetching orders: {e}")
             return {"success": False, "message": f"Error fetching orders: {e}"}
+
         finally:
             await self.db_manager.disconnect()
 
+
     # ------------------------------------------------------------
-    # 🟢 Get All Orders (optional filter by pharma)
+    # 🟢 Get All Orders (filter by pharma)
     # ------------------------------------------------------------
-    async def get_all_orders_by_pharma(self, distributor_id: Optional[int] = None) -> List[dict]:
+
+    async def get_all_orders_by_pharma(self, pharma_id: Optional[int] = None) -> Dict[str, Any]:
         try:
             await self.db_manager.connect()
-            query = {"DistributorId": distributor_id} if distributor_id else None
+
+            query = {"PharmaId": pharma_id} if pharma_id else None
             result = await self.db_manager.read(PharmaOrder, query)
+
             orders = [PharmaOrderRead.from_orm(o).dict() for o in result]
-            return orders
+
+            # ---- Status counts ----
+            total_orders = len(orders)
+
+            delivered = sum(1 for o in orders if o.get("Status") == "Delivered")
+            in_transit = sum(1 for o in orders if o.get("Status") == "Intransit")
+            placed = sum(
+                1 for o in orders
+                if o.get("Status") in ("New", "Pending")
+            )
+
+            response = {
+                "TotalOrders": total_orders,
+                "Delivered": delivered,
+                "InTransit": in_transit,
+                "Placed": placed,
+                "Data": orders
+            }
+
+            return response
+
         except Exception as e:
             logger.error(f"❌ Error fetching orders: {e}")
             return {"success": False, "message": f"Error fetching orders: {e}"}
+
         finally:
             await self.db_manager.disconnect()
 

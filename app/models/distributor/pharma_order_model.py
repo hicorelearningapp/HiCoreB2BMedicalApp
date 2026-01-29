@@ -8,7 +8,8 @@ class PharmaOrder(Base):
 
     PONumber = Column(Integer, primary_key=True, index=True)
     DistributorId = Column(Integer, nullable=False)
-    PharmaId = Column(Integer, nullable=False)  # 🔁 changed from PharmaName
+    PharmaId = Column(Integer, nullable=False)
+    PharmaName = Column(String, nullable=False)
 
     OrderDate = Column(DateTime, default=ist_now)
     ExpectedDelivery = Column(DateTime, nullable=True)
@@ -16,7 +17,7 @@ class PharmaOrder(Base):
     TotalItems = Column(Integer, nullable=True)
     TotalAmount = Column(Float, nullable=True)
 
-    Status = Column(String, default="Placed")  # Placed / InTransit / Delivered / Cancelled
+    Status = Column(String, default="New")
 
     CreatedAt = Column(DateTime, default=ist_now)
     UpdatedAt = Column(DateTime, default=ist_now, onupdate=ist_now)
@@ -28,13 +29,11 @@ class PharmaOrderItem(Base):
     ItemId = Column(Integer, primary_key=True, index=True)
     PONumber = Column(Integer, nullable=False)
     DistributorId = Column(Integer, nullable=False)
+    PharmaId = Column(Integer, nullable=False)
 
+    MedicineId = Column(Integer, nullable=False)
     MedicineName = Column(String, nullable=False)
-    Brand = Column(String, nullable=True)
     Quantity = Column(Integer, nullable=False)
     Price = Column(Float, nullable=True)
     TotalAmount = Column(Float, nullable=True)
-    Batch = Column(String, nullable=True)
-    ExpiryDate = Column(DateTime, nullable=True)
-
-    CreatedAt = Column(DateTime, default=ist_now)
+    

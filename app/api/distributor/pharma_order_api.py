@@ -14,7 +14,8 @@ class PharmaOrderAPI:
     def register_routes(self):
         self.router.post("/pharma-orders")(self.create_order)
         self.router.get("/pharma-orders/{po_number}")(self.get_order)
-        self.router.get("/{distributor_id}/pharma-orders")(self.get_all_orders)
+        self.router.get("/pharma-orders/{distributor_id}/distributor-orders")(self.get_all_distributor_orders)
+        self.router.get("/pharma-orders/{pharma_id}/pharma-orders")(self.get_all_pharma_orders)
         self.router.put("/pharma-orders/{po_number}")(self.update_order)
         self.router.delete("/pharma-orders/{po_number}")(self.delete_order)
 
@@ -37,11 +38,20 @@ class PharmaOrderAPI:
             raise HTTPException(status_code=500, detail=str(e))
 
     # -----------------------------
-    # Get All Orders (optional by distributor)
+    # Get All Orders ( by distributor)
     # -----------------------------
-    async def get_all_orders(self, distributor_id: Optional[int] = None):
+    async def get_all_distributor_orders(self, distributor_id: Optional[int] = None):
         try:
-            return await self.crud.get_all_orders(distributor_id)
+            return await self.crud.get_all_orders_by_distributor(distributor_id)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+        
+    # -----------------------------
+    # Get All Orders ( by pharma)
+    # -----------------------------
+    async def get_all_pharma_orders(self, pharma_id: Optional[int] = None):
+        try:
+            return await self.crud.get_all_orders_by_pharma(pharma_id)
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
