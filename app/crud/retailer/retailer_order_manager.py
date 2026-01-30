@@ -3,6 +3,7 @@ from ...utils.timezone import ist_now
 from ...utils.logger import get_logger
 from ...db.base.database_manager import DatabaseManager
 from ...models.retailer.retailer_order_model import RetailerOrder
+from ...models.retailer.retailer_model import Retailer
 from ...schemas.retailer.retailer_order_schema import (
     RetailerOrderCreate,
     RetailerOrderUpdate,
@@ -100,20 +101,11 @@ class RetailerOrderManager:
             )
 
             order_schema = RetailerOrderRead.from_orm(order).dict()
-            order_schema["Items"] = [
-                {
-                    "ItemId": i.ItemId,
-                    "OrderId": i.OrderId,
-                    "RetailerId": i.RetailerId,
-                    "DistributorId": i.DistributorId,
-                    "MedicineId": i.MedicineId,
-                    "MedicineName": i.MedicineName,
-                    "Quantity": i.Quantity,
-                    "Price": i.Price,
-                    "TotalAmount": i.TotalAmount,
-                }
-                for i in items
-            ]
+            order_schema["Retailer"] = await self.db_manager.read(
+                Retailer, {"RetailerId": order.RetailerId}
+            )
+            order_schema["Items"] = [item.__dict__ for item in items]
+            
 
             return order_schema
 
@@ -153,6 +145,55 @@ class RetailerOrderManager:
                 "InTransit": in_transit,
                 "Placed": placed,
                 "Data": orders
+            }
+
+            return response
+
+        except Exception as e:
+            logger.error(f"❌ Error fetching orders: {e}")
+            return {"success": False, "message": f"Error fetching orders: {e}"}
+
+        finally:
+            await self.db_manager.disconnect()
+
+    # ------------------------------------------------------------
+    # 🟢 Get All Orders (filter by Distributor)
+    # ------------------------------------------------------------
+
+    async def get_orders_by_distributor(self, distributor_id: Optional[int] = None) -> Dict[str, Any]:
+        try:
+            await self.db_manager.connect()
+
+            query = {"DistributorId": distributor_id} if distributor_id else None
+            result = await self.db_manager.read(RetailerOrder, query)
+
+            orders = [RetailerOrderRead.from_orm(o).dict() for o in result]
+
+            new_orders = [await self.get_order(o.get("OrderId")) for o in orders if o.get("Status") == "New"]        
+
+            # ---- Status counts ----
+            total_orders = len(orders)
+
+            delivered = sum(1 for o in orders if o.get("Status") == "Delivered")
+            cancelled = sum(1 for o in orders if o.get("Status") == "Cancelled")
+            in_transit = sum(1 for o in orders if o.get("Status") == "InTransit")
+            pending = sum(1 for o in orders if o.get("Status") == "Pending")
+            new = sum(1 for o in orders if o.get("Status") == "New")
+            accepted = sum(
+                1 for o in orders
+                if o.get("Status") not in ("New", "Cancelled")
+            )
+
+            response = {
+                "TotalOrders": total_orders,
+                "New": new,
+                "Accepted": accepted,
+                "Pending": pending,
+                "InTransit": in_transit,                                
+                "Delivered": delivered,
+                "Cancelled": cancelled,
+                "NewOrders": new_orders,              
+                "AllOrders": orders
             }
 
             return response

@@ -21,7 +21,7 @@ class DistributorDashboardManager:
             )
 
             orders_today = [o for o in orders if o.OrderDateTime.date() == today]
-            new_orders = [o for o in orders_today if o.OrderStage == "New"]
+            new_orders = [o for o in orders_today if o.Status == "New"]
 
             # Fetch all retailers for the distributor
             # This avoids passing lists to SQLite
@@ -33,13 +33,13 @@ class DistributorDashboardManager:
             retailer_map = {r.RetailerId: r.OwnerName for r in retailers}
 
             return {
-                "TodaySales": sum(o.Amount for o in orders_today),
+                "TodaySales": sum(o.TotalAmount for o in orders_today),
                 "NewOrders": len(new_orders),
                 "NewOrdersList": [
                     {
                         "OrderID": o.OrderId,
                         "RetailerName": retailer_map.get(o.RetailerId, "Unknown"),
-                        "Price": o.Amount
+                        "Price": o.TotalAmount
                     }
                     for o in new_orders
                 ],
@@ -47,8 +47,8 @@ class DistributorDashboardManager:
                     {
                         "OrderID": o.OrderId,
                         "RetailerName": retailer_map.get(o.RetailerId, "Unknown"),
-                        "Price": o.Amount,
-                        "Status": o.OrderStatus
+                        "Price": o.TotalAmount,
+                        "Status": o.Status
                     }
                     for o in orders
                 ]

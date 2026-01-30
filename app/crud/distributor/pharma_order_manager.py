@@ -3,6 +3,7 @@ from ...utils.timezone import ist_now
 from ...utils.logger import get_logger
 from ...db.base.database_manager import DatabaseManager
 from ...models.distributor.pharma_order_model import PharmaOrder, PharmaOrderItem
+from ...models.distributor.distributor_model import Distributor
 from ...schemas.distributor.pharma_order_schema import (
     PharmaOrderCreate,
     PharmaOrderUpdate,
@@ -58,6 +59,9 @@ class PharmaOrderManager:
             order = orders[0]
             items = await self.db_manager.read(PharmaOrderItem, {"PONumber": po_number})
             order_schema = PharmaOrderRead.from_orm(order).dict()
+            order_schema["Distributor"] = await self.db_manager.read(
+                Distributor, {"DistributorId": order.DistributorId}
+            )
             order_schema["Items"] = [item.__dict__ for item in items]
 
             return order_schema
@@ -113,6 +117,46 @@ class PharmaOrderManager:
     # 🟢 Get All Orders (filter by pharma)
     # ------------------------------------------------------------
 
+    # async def get_all_orders_by_pharma(self, pharma_id: Optional[int] = None) -> Dict[str, Any]:
+    #     try:
+    #         await self.db_manager.connect()
+
+    #         query = {"PharmaId": pharma_id} if pharma_id else None
+    #         result = await self.db_manager.read(PharmaOrder, query)
+
+    #         orders = [PharmaOrderRead.from_orm(o).dict() for o in result]
+
+    #         # ---- Status counts ----
+    #         total_orders = len(orders)
+
+    #         delivered = sum(1 for o in orders if o.get("Status") == "Delivered")
+    #         in_transit = sum(1 for o in orders if o.get("Status") == "Intransit")
+    #         placed = sum(
+    #             1 for o in orders
+    #             if o.get("Status") in ("New", "Pending")
+    #         )
+
+    #         response = {
+    #             "TotalOrders": total_orders,
+    #             "Delivered": delivered,
+    #             "InTransit": in_transit,
+    #             "Placed": placed,
+    #             "Data": orders
+    #         }
+
+    #         return response
+
+    #     except Exception as e:
+    #         logger.error(f"❌ Error fetching orders: {e}")
+    #         return {"success": False, "message": f"Error fetching orders: {e}"}
+
+    #     finally:
+    #         await self.db_manager.disconnect()
+
+    # ------------------------------------------------------------
+    # 🟢 Get All Orders (filter by pharma)
+    # ------------------------------------------------------------
+
     async def get_all_orders_by_pharma(self, pharma_id: Optional[int] = None) -> Dict[str, Any]:
         try:
             await self.db_manager.connect()
@@ -122,22 +166,31 @@ class PharmaOrderManager:
 
             orders = [PharmaOrderRead.from_orm(o).dict() for o in result]
 
+            new_orders = [await self.get_order(o.get("PONumber")) for o in orders if o.get("Status") == "New"]        
+
             # ---- Status counts ----
             total_orders = len(orders)
 
             delivered = sum(1 for o in orders if o.get("Status") == "Delivered")
-            in_transit = sum(1 for o in orders if o.get("Status") == "Intransit")
-            placed = sum(
+            cancelled = sum(1 for o in orders if o.get("Status") == "Cancelled")
+            in_transit = sum(1 for o in orders if o.get("Status") == "InTransit")
+            pending = sum(1 for o in orders if o.get("Status") == "Pending")
+            new = sum(1 for o in orders if o.get("Status") == "New")
+            accepted = sum(
                 1 for o in orders
-                if o.get("Status") in ("New", "Pending")
+                if o.get("Status") not in ("New", "Cancelled")
             )
 
             response = {
                 "TotalOrders": total_orders,
+                "New": new,
+                "Accepted": accepted,
+                "Pending": pending,
+                "InTransit": in_transit,                                
                 "Delivered": delivered,
-                "InTransit": in_transit,
-                "Placed": placed,
-                "Data": orders
+                "Cancelled": cancelled,
+                "NewOrders": new_orders,              
+                "AllOrders": orders
             }
 
             return response
