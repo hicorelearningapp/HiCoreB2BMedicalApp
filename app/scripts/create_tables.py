@@ -116,6 +116,7 @@ class TableCreator:
             OrderId INTEGER PRIMARY KEY AUTOINCREMENT,
             RetailerId INTEGER NOT NULL,
             DistributorId INTEGER NOT NULL,
+            DistributorName TEXT NOT NULL,
             OrderDateTime DATETIME DEFAULT CURRENT_TIMESTAMP,
             ExpectedDelivery DATETIME,
             DeliveryMode TEXT,
@@ -125,8 +126,9 @@ class TableCreator:
             PaymentMode TEXT,
             PaymentStatus TEXT DEFAULT 'Pending',
             PaymentTransactionId TEXT,
-            Amount REAL DEFAULT 0.0,
-            OrderStatus TEXT DEFAULT 'New',
+            TotalItems INTEGER,
+            TotalAmount REAL DEFAULT 0.0,
+            Status TEXT DEFAULT 'New',
             CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
             UpdatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
         );
@@ -139,10 +141,10 @@ class TableCreator:
             RetailerId INTEGER NOT NULL,
             DistributorId INTEGER NOT NULL,
             MedicineId INTEGER NOT NULL,
+            MedicineName TEXT NOT NULL,
             Quantity INTEGER NOT NULL,
-            GSTPercentage REAL NOT NULL,
-            TotalAmount REAL NOT NULL,
-            CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+            Price REAL NOT NULL,
+            TotalAmount REAL NOT NULL            
         );
         """
 
@@ -514,7 +516,7 @@ class TableCreator:
         # self.create_retailer_table()
         # self.create_retailer_inventory_table()
         # self.create_retailer_notification_table()
-        # self.create_retailer_order_tables()
+        self.create_retailer_order_tables()
         # self.create_customer_invoice_tables()
 
 
@@ -523,12 +525,12 @@ class TableCreator:
         # self.create_distributor_inventory_table()
         # self.create_distributor_notification_table()
         # self.create_retailer_invoice_tables()
-        self.create_pharma_order_tables()
+        # self.create_pharma_order_tables()
 
 
         # self.add_column_if_not_exists("PharmaOrder", "PharmaName", "TEXT")
         # self.remove_column_if_exists("PharmaOrder", "MedicineCategoryId")
-        # self.remove_table_if_exists("Doctor")
+        # self.remove_table_if_exists("RetailerOrderItem")
 
 
         # tables = [

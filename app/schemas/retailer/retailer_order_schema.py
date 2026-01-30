@@ -10,9 +10,10 @@ class RetailerOrderItemBase(BaseModel):
     RetailerId: Optional[int]    
     DistributorId: Optional[int]    
     MedicineId: int
+    MedicineName: str
     Quantity: int
-    GSTPercentage: float   
-    TotalAmount: float  # (Price * Quantity) + GST, handled in manager
+    Price: float   
+    TotalAmount: float  
 
 
 class RetailerOrderItemCreate(RetailerOrderItemBase):
@@ -34,6 +35,7 @@ class RetailerOrderItemRead(RetailerOrderItemBase):
 class RetailerOrderBase(BaseModel):
     RetailerId: Optional[int]
     DistributorId: Optional[int]
+    DistributorName: Optional[str]
     
     OrderDateTime: Optional[datetime] = Field(default_factory=ist_now)
     ExpectedDelivery: Optional[datetime] = Field(default_factory=ist_now)
@@ -46,21 +48,18 @@ class RetailerOrderBase(BaseModel):
     PaymentMode: Optional[str]
     PaymentStatus: Optional[str] = "Pending"
     PaymentTransactionId: Optional[str]
-    Amount: Optional[float] = 0.0
     
+    TotalItems: Optional[int]
+    TotalAmount: Optional[float] = 0.0  
 
-    OrderStatus: Optional[str] = "New"
+    Status: Optional[str] = "New"
 
     CreatedAt: Optional[datetime] = Field(default_factory=ist_now)
     UpdatedAt: Optional[datetime] = Field(default_factory=ist_now)
 
 
 class RetailerOrderCreate(RetailerOrderBase):
-    RetailerId: int
-    DistributorId: int
-    Amount: float
-    # You can optionally include order items
-    # Items: Optional[List[OrderItemCreate]] = []
+    Items: Optional[List[RetailerOrderItemCreate]]
 
 
 class RetailerOrderUpdate(RetailerOrderBase):
@@ -69,7 +68,7 @@ class RetailerOrderUpdate(RetailerOrderBase):
 
 class RetailerOrderRead(RetailerOrderBase):
     OrderId: int
-    Items: Optional[List[RetailerOrderItemRead]] = []
+    # Items: Optional[List[RetailerOrderItemRead]]
 
     class Config:
         from_attributes = True
