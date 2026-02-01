@@ -1,5 +1,6 @@
 from collections import defaultdict
 # from ...models.customer.order_model import Order, OrderItem
+from ...api.retailer.customer_order_api import get_orders
 from ...models.retailer.customer_invoice_model import CustomerInvoice
 from ...db.base.database_manager import DatabaseManager
 from ...schemas.retailer.retailer_report_schema import RetailerSalesDashboard, RetailerTopSellingProduct
@@ -19,7 +20,7 @@ class RetailerReportManager:
         orders = await self.db_manager.read(Order, {"RetailerId": retailer_id})
         order_items = await self.db_manager.read(OrderItem, {"RetailerId": retailer_id})
 
-        total_revenue = sum(o.Amount or 0 for o in orders)
+        total_revenue = sum(o.TotalAmount or 0 for o in orders)
         total_orders = len(orders)
         avg_order_value = total_revenue / total_orders if total_orders > 0 else 0
 

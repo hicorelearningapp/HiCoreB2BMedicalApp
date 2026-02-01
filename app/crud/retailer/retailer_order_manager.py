@@ -230,6 +230,43 @@ class RetailerOrderManager:
         finally:
             await self.db_manager.disconnect()
 
+    
+    # ------------------------------------------------------------
+    # 🔵 Update Order Status ONLY
+    # ------------------------------------------------------------
+    async def update_order_status(self, order_id: int, status: str) -> dict:
+        try:
+            await self.db_manager.connect()
+
+            # Optional: enforce allowed status transitions
+            # allowed_status = {"New", "Pending", "InTransit", "Delivered", "Cancelled"}
+            # if status not in allowed_status:
+            #     return {"success": False, "message": "Invalid status value"}
+
+            rowcount = await self.db_manager.update(
+                RetailerOrder,
+                {"OrderId": order_id},
+                {
+                    "Status": status,
+                    "UpdatedAt": ist_now()
+                }
+            )
+
+            if rowcount:
+                return {
+                    "success": True,
+                    "message": f"Order status updated to {status}"
+                }
+
+            return {"success": False, "message": "Order not found"}
+
+        except Exception as e:
+            logger.error(f"❌ Error updating order status: {e}")
+            return {"success": False, "message": str(e)}
+
+        finally:
+            await self.db_manager.disconnect()
+
     # ------------------------------------------------------------
     # 🔴 Delete Order + Items
     # ------------------------------------------------------------

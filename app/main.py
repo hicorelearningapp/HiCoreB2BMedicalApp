@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 
 from .api.retailer.medicine_api import MedicineAPI
-from .api.retailer.customer_order_api import router as customer_orders
+from .api.retailer.customer_order_api import CustomerOrderAPI
 
 
 # Retailer
@@ -43,6 +43,7 @@ app.mount("/Images", StaticFiles(directory="Images"), name="Images")
 
 
 medicine_api = MedicineAPI()
+customer_order_api = CustomerOrderAPI()
 
 # Retailer
 retailer_api = RetailerAPI()
@@ -69,7 +70,7 @@ pharma_order_api = PharmaOrderAPI()
 
 
 app.include_router(medicine_api.router, tags=["Medicine"])
-app.include_router(customer_orders)
+app.include_router(customer_order_api.router, tags=["Customer Order Api"])
 
 
 # Retailer

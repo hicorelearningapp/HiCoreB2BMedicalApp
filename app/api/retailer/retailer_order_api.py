@@ -26,6 +26,7 @@ class RetailerOrderAPI:
         self.router.get("/retailer-orders/retailer/{retailer_id}")(self.get_by_retailer)
         self.router.get("/retailer-orders/distributor/{distributor_id}")(self.get_by_distributor)
         self.router.put("/retailer-orders/{order_id}")(self.update)
+        self.router.patch("/retailer-orders/{order_id}/status")(self.update_status)
         self.router.delete("/retailer-orders/{order_id}")(self.delete)
 
     async def create(self, data: RetailerOrderCreate):
@@ -42,6 +43,9 @@ class RetailerOrderAPI:
 
     async def update(self, order_id: int, data: RetailerOrderUpdate):
         return await self.manager.update_order(order_id, data)
+    
+    async def update_status(self, order_id: int, status: str):
+        return await self.manager.update_order_status(order_id, status)
 
     async def delete(self, order_id: int):
         return await self.manager.delete_order(order_id)
