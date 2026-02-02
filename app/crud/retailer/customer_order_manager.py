@@ -5,7 +5,8 @@ from collections import defaultdict
 import calendar
 
 
-GET_ORDER_BASE_URL = "http://151.185.41.194:8000/orders/retailer/"
+GET_ALL_ORDER_BASE_URL = "http://151.185.41.194:8000/orders/retailer/"
+GET_ORDER_BASE_URL = "http://151.185.41.194:8000/orders/"
 GET_ORDER_ITEM_BASE_URL = "http://151.185.41.194:8000/orders/items/retailer/"
 UPDATE_STATUS_BASE_URL = "http://151.185.41.194:8000/orders"
 
@@ -43,12 +44,39 @@ class CustomerOrderManager:
     # -----------------------------
     # Get Orders by Retailer
     # -----------------------------
-    async def get_orders(self, retailer_id: int):
+    async def get_order(self, order_id: int):
         """
         Fetch orders from external API by retailer_id
         and return aggregated order statistics
         """
-        url = f"{GET_ORDER_BASE_URL}{retailer_id}"
+        url = f"{GET_ORDER_BASE_URL}{order_id}"
+
+        async with httpx.AsyncClient() as client:
+            try:
+                response = await client.get(url, timeout=10.0)
+                # response.raise_for_status()
+                return response.json()
+
+            except httpx.HTTPStatusError as exc:
+                raise HTTPException(
+                    status_code=exc.response.status_code,
+                    detail=f"Error fetching orders: {exc.response.text}"
+                )
+            except httpx.RequestError as exc:
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Request failed: {exc}"
+                )
+            
+    # -----------------------------
+    # Get Orders by Retailer
+    # -----------------------------
+    async def get_all_orders(self, retailer_id: int):
+        """
+        Fetch orders from external API by retailer_id
+        and return aggregated order statistics
+        """
+        url = f"{GET_ALL_ORDER_BASE_URL}{retailer_id}"
 
         async with httpx.AsyncClient() as client:
             try:

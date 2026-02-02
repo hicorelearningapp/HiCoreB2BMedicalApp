@@ -82,7 +82,7 @@ class RetailerOrderManager:
             await self.db_manager.disconnect()
 
     # ------------------------------------------------------------
-    # 🟡 Get Order + Items
+    # 🟡 Get Order + Items (Filtered Retailer Fields)
     # ------------------------------------------------------------
     async def get_order(self, order_id: int) -> dict:
         try:
@@ -100,12 +100,43 @@ class RetailerOrderManager:
                 RetailerOrderItem, {"OrderId": order_id}
             )
 
+            # Convert order to schema
             order_schema = RetailerOrderRead.from_orm(order).dict()
-            order_schema["Retailer"] = await self.db_manager.read(
+
+            # ----------------------------
+            # Fetch retailer
+            # ----------------------------
+            retailers = await self.db_manager.read(
                 Retailer, {"RetailerId": order.RetailerId}
             )
-            order_schema["Items"] = [item.__dict__ for item in items]
-            
+
+            if retailers:
+                retailer = retailers[0]
+                order_schema["Retailer"] = {
+                    "Name": retailer.OwnerName,
+                    "ShopName": retailer.ShopName,
+                    "GSTNumber": retailer.GSTNumber,
+                    "LicenseNumber": retailer.LicenseNumber,
+                    "AddressLine1": retailer.AddressLine1,
+                    "AddressLine2": retailer.AddressLine2,
+                    "City": retailer.City,
+                    "State": retailer.State,
+                    "Country": retailer.Country,
+                    "PostalCode": retailer.PostalCode,
+                    "Latitude": retailer.Latitude,
+                    "Longitude": retailer.Longitude,
+                    "PhoneNumber": retailer.PhoneNumber,
+                    "Email": retailer.Email
+                }
+            else:
+                order_schema["Retailer"] = None
+
+            # ----------------------------
+            # Items
+            # ----------------------------
+            order_schema["Items"] = [
+                item.__dict__ for item in items
+            ]
 
             return order_schema
 
@@ -115,6 +146,7 @@ class RetailerOrderManager:
 
         finally:
             await self.db_manager.disconnect()
+
 
     # ------------------------------------------------------------
     # 🟢 Get All Orders (filter by Retailer)

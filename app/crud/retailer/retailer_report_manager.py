@@ -1,6 +1,6 @@
 from collections import defaultdict
 # from ...models.customer.order_model import Order, OrderItem
-from ...api.retailer.customer_order_api import get_orders
+# from ...api.retailer.customer_order_api import get_orders
 from ...models.retailer.customer_invoice_model import CustomerInvoice
 from ...db.base.database_manager import DatabaseManager
 from ...schemas.retailer.retailer_report_schema import RetailerSalesDashboard, RetailerTopSellingProduct
