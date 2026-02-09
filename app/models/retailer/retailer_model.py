@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float
+from sqlalchemy import Column, Integer, String, Float, Boolean
 from .sql_base import Base
 
 class Retailer(Base):
@@ -14,12 +14,12 @@ class Retailer(Base):
     PasswordHash = Column(String, nullable=True)  # Store hashed password
 
     # Address fields
-    AddressLine1 = Column(String(255), nullable=False)
+    AddressLine1 = Column(String(255), nullable=True)
     AddressLine2 = Column(String(255), nullable=True)
-    City = Column(String(100), nullable=False)
-    State = Column(String(100), nullable=False)
-    Country = Column(String(100), nullable=False)
-    PostalCode = Column(String(20), nullable=False)
+    City = Column(String(100), nullable=True)
+    State = Column(String(100), nullable=True)
+    Country = Column(String(100), nullable=True)
+    PostalCode = Column(String(20), nullable=True)
     Latitude = Column(Float, nullable=True)
     Longitude = Column(Float, nullable=True)
 
@@ -30,3 +30,5 @@ class Retailer(Base):
     AccountNumber = Column(String, nullable=True)
     IFSCCode = Column(String, nullable=True)
     Branch = Column(String, nullable=True)
+
+    IsRegistered = Column(Boolean, default=False)

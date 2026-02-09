@@ -2,7 +2,13 @@ import os
 from fastapi import APIRouter, HTTPException, Form, File, UploadFile
 from typing import List
 from ...config import settings
-from ...schemas.retailer.retailer_schema import RetailerCreate, RetailerUpdate, RetailerRead
+from ...schemas.retailer.retailer_schema import (
+    RetailerCreate, 
+    RetailerUpdate, 
+    RetailerRead,
+    RetailerRegisterSchema,
+    RetailerLoginSchema
+)
 from ...crud.retailer.retailer_manager import RetailerManager
 from ...utils.image_uploader import save_picture
 
@@ -19,23 +25,27 @@ class RetailerAPI:
         self.router.get("/retailers", response_model=dict)(self.get_all_retailers)
         self.router.put("/retailers/{retailer_id}", response_model=dict)(self.update_retailer)
         self.router.delete("/retailers/{retailer_id}", response_model=dict)(self.delete_retailer)
+        self.router.post("/retailers/register", response_model=dict)(self.register)
+        self.router.post("/retailers/login", response_model=dict)(self.login)
+        
+
 
     # ---------------- CREATE ----------------
     async def create_retailer(
         self,
-        ShopName: str = Form(...),
-        OwnerName: str = Form(...),
+        ShopName: str = Form(None),
+        OwnerName: str = Form(None),
         GSTNumber: str = Form(None),
         LicenseNumber: str = Form(None),
         PhoneNumber: str = Form(None),
-        Email: str = Form(...),
-        Password: str = Form(...),
-        AddressLine1: str = Form(...),
+        Email: str = Form(None),
+        Password: str = Form(None),
+        AddressLine1: str = Form(None),
         AddressLine2: str = Form(None),
-        City: str = Form(...),
-        State: str = Form(...),
-        Country: str = Form(...),
-        PostalCode: str = Form(...),
+        City: str = Form(None),
+        State: str = Form(None),
+        Country: str = Form(None),
+        PostalCode: str = Form(None),
         Latitude: float = Form(None),
         Longitude: float = Form(None),
         BankName: str = Form(None),
@@ -43,6 +53,7 @@ class RetailerAPI:
         IFSCCode: str = Form(None),
         Branch: str = Form(None),
         ShopPic: UploadFile = File(None),
+        IsRegistered: bool = Form(False),
     ):
         try:
             # save image if provided
@@ -72,6 +83,7 @@ class RetailerAPI:
                 IFSCCode=IFSCCode,
                 Branch=Branch,
                 ShopPic=shop_pic_path,
+                IsRegistered=IsRegistered,
             )
 
             return await self.crud.create_retailer(retailer_obj)
@@ -119,6 +131,7 @@ class RetailerAPI:
         IFSCCode: str = Form(None),
         Branch: str = Form(None),
         ShopPic: UploadFile = File(None),
+        IsRegistered: bool = Form(False),
     ):
         try:
             old_retailer = await self.crud.get_retailer(retailer_id)
@@ -148,12 +161,10 @@ class RetailerAPI:
                 "AccountNumber": AccountNumber,
                 "IFSCCode": IFSCCode,
                 "Branch": Branch,
+                "IsRegistered": IsRegistered,
             }.items():
                 if value is not None:
-                    if field_name == "Password":
-                        update_data["PasswordHash"] = value
-                    else:
-                        update_data[field_name] = value
+                    update_data[field_name] = value
 
             # Handle shop picture replacement
             if ShopPic:
@@ -200,3 +211,18 @@ class RetailerAPI:
 
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
+        
+    # ---------------- REGISTER ----------------
+    async def register(self, payload: RetailerRegisterSchema):
+        result = await self.crud.register(payload.Email, payload.Password)
+        if not result["success"]:
+            raise HTTPException(status_code=400, detail=result["message"])
+        return result
+
+    # ---------------- LOGIN ----------------
+    async def login(self, payload: RetailerLoginSchema):
+        result = await self.crud.login(payload.Email, payload.Password)
+        if not result["success"]:
+            raise HTTPException(status_code=401, detail=result["message"])
+        return result
+

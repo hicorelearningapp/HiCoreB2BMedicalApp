@@ -10,15 +10,15 @@ class DistributorInventoryAPI:
         self.register_routes()
 
     def register_routes(self):
-        self.router.post("/{distributor_id}/inventory")(self.create_inventory)
-        self.router.get("/{distributor_id}/inventory")(self.get_all_inventory)
-        self.router.get("/{distributor_id}/inventory/{inventory_id}")(self.get_inventory)
-        self.router.put("/{distributor_id}/inventory/{inventory_id}")(self.update_inventory)
-        self.router.delete("/{distributor_id}/inventory/{inventory_id}")(self.delete_inventory)
+        self.router.post("/distributor/{distributor_id}/inventory")(self.create_inventory)
+        self.router.get("/distributor/{distributor_id}/inventory")(self.get_all_inventory)
+        self.router.get("/distributor/{distributor_id}/inventory/{inventory_id}")(self.get_inventory)
+        self.router.put("/distributor/{distributor_id}/inventory/{inventory_id}")(self.update_inventory)
+        self.router.delete("/distributor/{distributor_id}/inventory/{inventory_id}")(self.delete_inventory)
 
         # business
-        self.router.post("/{distributor_id}/inventory/{inventory_id}/reduce")(self.reduce_stock)
-        self.router.post("/{distributor_id}/inventory/{inventory_id}/increase")(self.add_stock)
+        self.router.post("/distributor/{distributor_id}/inventory/{inventory_id}/reduce")(self.reduce_stock)
+        self.router.post("/distributor/{distributor_id}/inventory/{inventory_id}/increase")(self.add_stock)
 
     async def create_inventory(self, distributor_id: int, inventory: DistributorInventoryCreate):
         try:

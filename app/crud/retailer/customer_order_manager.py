@@ -6,7 +6,7 @@ import calendar
 
 
 GET_ALL_ORDER_BASE_URL = "http://151.185.41.194:8000/orders/retailer/"
-GET_ORDER_BASE_URL = "http://151.185.41.194:8000/orders/"
+GET_ORDER_BASE_URL = "http://151.185.41.194:8000/orders/retailer/"
 GET_ORDER_ITEM_BASE_URL = "http://151.185.41.194:8000/orders/items/retailer/"
 UPDATE_STATUS_BASE_URL = "http://151.185.41.194:8000/orders"
 
@@ -112,6 +112,7 @@ class CustomerOrderManager:
         )
 
         new_orders = [o for o in orders if o.get("Status") == "New"]
+        # new_orders = [await self.get_order(o.get("OrderId")) for o in orders if o.get("Status") == "New"] 
 
         # -----------------------------
         # Final Response
@@ -140,7 +141,15 @@ class CustomerOrderManager:
                     timeout=10.0
                 )
                 orders_resp.raise_for_status()
-                orders = orders_resp.json()
+                orders_json = orders_resp.json()
+
+                # Ensure orders is a list
+                if isinstance(orders_json, list):
+                    orders = orders_json
+                elif isinstance(orders_json, dict):
+                    orders = orders_json.get("data", [])
+                else:
+                    orders = []
 
                 # ---- fetch order items ----
                 items_resp = await client.get(
@@ -148,13 +157,27 @@ class CustomerOrderManager:
                     timeout=10.0
                 )
                 items_resp.raise_for_status()
-                order_items = items_resp.json()
+                items_json = items_resp.json()
+
+                # Ensure order_items is a list
+                if isinstance(items_json, list):
+                    order_items = items_json
+                elif isinstance(items_json, dict):
+                    order_items = items_json.get("data", [])
+                else:
+                    order_items = []
 
             # ---------------------------
             # Revenue & Orders
             # ---------------------------
-            total_revenue = sum(o.get("TotalAmount", 0) or 0 for o in orders)
+            total_revenue = sum(
+                o.get("TotalAmount", 0) or 0
+                for o in orders
+                if isinstance(o, dict)
+            )
+
             total_orders = len(orders)
+
             avg_order_value = (
                 total_revenue / total_orders if total_orders > 0 else 0
             )
@@ -166,15 +189,29 @@ class CustomerOrderManager:
             order_volume_dict = defaultdict(int)
 
             for o in orders:
-                if o.get("OrderDateTime"):
-                    month = o["OrderDateTime"][5:7]  # YYYY-MM-DD
+                if not isinstance(o, dict):
+                    continue
+
+                order_date = o.get("OrderDateTime")
+                if order_date:
+                    # Expected format: YYYY-MM-DD
+                    month = order_date[5:7]
                     month_name = calendar.month_abbr[int(month)]
+
                     sales_trend_dict[month_name] += o.get("TotalAmount", 0) or 0
                     order_volume_dict[month_name] += 1
 
             all_months = [calendar.month_abbr[i] for i in range(1, 13)]
-            sales_trend = [{m: sales_trend_dict.get(m, 0)} for m in all_months]
-            order_volume = [{m: order_volume_dict.get(m, 0)} for m in all_months]
+
+            sales_trend = [
+                {m: sales_trend_dict.get(m, 0)}
+                for m in all_months
+            ]
+
+            order_volume = [
+                {m: order_volume_dict.get(m, 0)}
+                for m in all_months
+            ]
 
             # ---------------------------
             # Top Selling Products
@@ -182,7 +219,13 @@ class CustomerOrderManager:
             # product_sales = defaultdict(lambda: {"Quantity": 0, "UnitPrice": 0})
 
             # for item in order_items:
+            #     if not isinstance(item, dict):
+            #         continue
+
             #     name = item.get("MedicineName")
+            #     if not name:
+            #         continue
+
             #     qty = item.get("Quantity", 0) or 0
             #     price = item.get("UnitPrice", 0) or 0
 
@@ -192,11 +235,11 @@ class CustomerOrderManager:
             # top_products = sorted(
             #     [
             #         {
-            #             "MedicineName": k,
-            #             "Quantity": v["Quantity"],
-            #             "UnitPrice": v["UnitPrice"]
+            #             "MedicineName": name,
+            #             "Quantity": data["Quantity"],
+            #             "UnitPrice": data["UnitPrice"]
             #         }
-            #         for k, v in product_sales.items()
+            #         for name, data in product_sales.items()
             #     ],
             #     key=lambda x: x["Quantity"],
             #     reverse=True
@@ -210,13 +253,12 @@ class CustomerOrderManager:
                 "TotalOrders": total_orders,
                 "AvgOrderValue": avg_order_value,
                 "SalesTrend": sales_trend,
-                "OrderVolume": order_volume
+                "OrderVolume": order_volume,
                 # "TopSellingProduct": top_products
             }
 
         except httpx.HTTPError as e:
             raise HTTPException(status_code=500, detail=str(e))
-        
 
     # -----------------------------
     # Retailer Dashboard
@@ -229,23 +271,46 @@ class CustomerOrderManager:
                     timeout=10.0
                 )
                 response.raise_for_status()
-                orders = response.json()
+                orders_json = response.json()
+
+            # ----------------------
+            # Ensure orders is a list
+            # ----------------------
+            if isinstance(orders_json, list):
+                orders = orders_json
+            elif isinstance(orders_json, dict):
+                orders = orders_json.get("data", [])
+            else:
+                orders = []
 
             today = datetime.today().date()
 
             # ----------------------
             # Today's Orders
             # ----------------------
-            orders_today = [
-                o for o in orders
-                if o.get("OrderDateTime")
-                and datetime.fromisoformat(o["OrderDateTime"]).date() == today
-            ]
+            orders_today = []
+            for o in orders:
+                if not isinstance(o, dict):
+                    continue
 
-            today_sales = sum(o.get("TotalAmount", 0) or 0 for o in orders_today)
+                order_dt = o.get("OrderDateTime")
+                if not order_dt:
+                    continue
+
+                try:
+                    if datetime.fromisoformat(order_dt).date() == today:
+                        orders_today.append(o)
+                except ValueError:
+                    continue
+
+            today_sales = sum(
+                o.get("TotalAmount", 0) or 0
+                for o in orders_today
+            )
 
             new_orders_today = [
-                o for o in orders_today if o.get("Status") == "New"
+                o for o in orders_today
+                if o.get("Status") == "New"
             ]
 
             # ----------------------
@@ -258,6 +323,7 @@ class CustomerOrderManager:
                     "Price": o.get("TotalAmount")
                 }
                 for o in new_orders_today
+                if isinstance(o, dict)
             ]
 
             # ----------------------
@@ -271,6 +337,7 @@ class CustomerOrderManager:
                     "Status": o.get("Status")
                 }
                 for o in orders
+                if isinstance(o, dict)
             ]
 
             # ----------------------

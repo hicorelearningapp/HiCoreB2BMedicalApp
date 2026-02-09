@@ -3,7 +3,9 @@ from fastapi import APIRouter, HTTPException, Form, File, UploadFile
 from ...config import settings
 from ...schemas.distributor.distributor_schema import (
     DistributorCreate,
-    DistributorUpdate
+    DistributorUpdate,
+    DistributorRegisterSchema,
+    DistributorLoginSchema
 )
 from ...crud.distributor.distributor_manager import DistributorManager
 from ...utils.image_uploader import save_picture
@@ -21,23 +23,26 @@ class DistributorAPI:
         self.router.get("/distributors", response_model=dict)(self.get_all_distributors)
         self.router.put("/distributors/{distributor_id}", response_model=dict)(self.update_distributor)
         self.router.delete("/distributors/{distributor_id}", response_model=dict)(self.delete_distributor)
+        self.router.post("/distributors/register", response_model=dict)(self.register)
+        self.router.post("/distributors/login", response_model=dict)(self.login)
+
 
     # ---------------- CREATE ----------------
     async def create_distributor(
         self,
-        CompanyName: str = Form(...),
-        ContactPersonName: str = Form(...),
+        CompanyName: str = Form(None),
+        ContactPersonName: str = Form(None),
         GSTNumber: str = Form(None),
         LicenseNumber: str = Form(None),
         PhoneNumber: str = Form(None),
-        Email: str = Form(...),
-        Password: str = Form(...),
-        AddressLine1: str = Form(...),
+        Email: str = Form(None),
+        Password: str = Form(None),
+        AddressLine1: str = Form(None),
         AddressLine2: str = Form(None),
-        City: str = Form(...),
-        State: str = Form(...),
-        Country: str = Form(...),
-        PostalCode: str = Form(...),
+        City: str = Form(None),
+        State: str = Form(None),
+        Country: str = Form(None),
+        PostalCode: str = Form(None),
         Latitude: float = Form(None),
         Longitude: float = Form(None),
         BankName: str = Form(None),
@@ -149,10 +154,8 @@ class DistributorAPI:
                 "Branch": Branch,
             }.items():
                 if value is not None:
-                    if field_name == "Password":
-                        update_data["PasswordHash"] = value
-                    else:
-                        update_data[field_name] = value
+                    update_data[field_name] = value
+                        
 
             # Handle company picture
             if CompanyPicture:
@@ -197,3 +200,18 @@ class DistributorAPI:
 
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
+        
+
+    # ---------------- REGISTER ----------------
+    async def register(self, payload: DistributorRegisterSchema):
+        result = await self.crud.register(payload.Email, payload.Password)
+        if not result["success"]:
+            raise HTTPException(status_code=400, detail=result["message"])
+        return result
+
+    # ---------------- LOGIN ----------------
+    async def login(self, payload: DistributorLoginSchema):
+        result = await self.crud.login(payload.Email, payload.Password)
+        if not result["success"]:
+            raise HTTPException(status_code=401, detail=result["message"])
+        return result

@@ -50,19 +50,20 @@ class TableCreator:
             PhoneNumber TEXT,
             Email TEXT,
             PasswordHash TEXT,
-            AddressLine1 TEXT NOT NULL,
+            AddressLine1 TEXT,
             AddressLine2 TEXT,
-            City TEXT NOT NULL,
-            State TEXT NOT NULL,
-            Country TEXT NOT NULL,
-            PostalCode TEXT NOT NULL,
+            City TEXT,
+            State TEXT,
+            Country TEXT,
+            PostalCode TEXT,
             Latitude REAL,
             Longitude REAL,
             ShopPic TEXT,
             BankName TEXT,
             AccountNumber TEXT,
             IFSCCode TEXT,
-            Branch TEXT
+            Branch TEXT,
+            IsRegistered BOOLEAN
         );
         """
         self._execute(sql, "Retailer")
@@ -210,12 +211,12 @@ class TableCreator:
             PasswordHash TEXT,
 
             -- Address fields (same as Retailer)
-            AddressLine1 TEXT NOT NULL,
+            AddressLine1 TEXT,
             AddressLine2 TEXT,
-            City TEXT NOT NULL,
-            State TEXT NOT NULL,
-            Country TEXT NOT NULL,
-            PostalCode TEXT NOT NULL,
+            City TEXT,
+            State TEXT,
+            Country TEXT,
+            PostalCode TEXT,
             Latitude REAL,
             Longitude REAL,
 
@@ -513,15 +514,15 @@ class TableCreator:
         # self.create_medicine_table()
 
         # Retailer tables
-        # self.create_retailer_table()
+        self.create_retailer_table()
         # self.create_retailer_inventory_table()
         # self.create_retailer_notification_table()
-        self.create_retailer_order_tables()
+        # self.create_retailer_order_tables()
         # self.create_customer_invoice_tables()
 
 
         # Distributor tables
-        # self.create_distributor_table()
+        self.create_distributor_table()
         # self.create_distributor_inventory_table()
         # self.create_distributor_notification_table()
         # self.create_retailer_invoice_tables()
@@ -530,7 +531,7 @@ class TableCreator:
 
         # self.add_column_if_not_exists("PharmaOrder", "PharmaName", "TEXT")
         # self.remove_column_if_exists("PharmaOrder", "MedicineCategoryId")
-        # self.remove_table_if_exists("RetailerOrderItem")
+        # self.remove_table_if_exists("Distributor")
 
 
         # tables = [
@@ -543,7 +544,7 @@ class TableCreator:
         #     self.remove_table_if_exists(table)
 
         
-        # self.remove_table_if_exists("PharmaOrder")
+        # self.remove_table_if_exists("Retailer")
 
 
 

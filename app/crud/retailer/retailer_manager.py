@@ -4,6 +4,8 @@ from ...db.base.database_manager import DatabaseManager
 from ...models.retailer.retailer_model import Retailer
 from ...schemas.retailer.retailer_schema import RetailerCreate, RetailerUpdate, RetailerRead
 import hashlib
+from ...utils.retailer_sync import sync_retailer
+
 
 logger = get_logger(__name__)
 
@@ -21,7 +23,20 @@ class RetailerManager:
             await self.db_manager.connect()
             data = retailer.dict()
             data["PasswordHash"] = hash_password(data.pop("Password"))
-            obj = await self.db_manager.create(Retailer, data)
+            existing = await self.db_manager.read(Retailer, {"Email": data["Email"]})
+            if not existing:
+                obj = await self.db_manager.create(Retailer, data)
+            else:
+                return {
+                "success": False,
+                "message": "Email Id Already Exists"
+            }
+            # 🔁 SYNC
+            res = await sync_retailer(
+                "create",
+                RetailerRead.from_orm(obj).dict()
+            )
+            print(res)
             logger.info(f"Created retailer {obj.RetailerId}")
             return {
                 "success": True,
@@ -77,6 +92,17 @@ class RetailerManager:
                 Retailer, {"RetailerId": retailer_id}, update_data
             )
             if rowcount:
+
+                # 🔁 SYNC
+                await sync_retailer(
+                    "update",
+                    {
+                        "RetailerId": retailer_id,
+                        **update_data
+                    }
+                )
+
+
                 logger.info(f"Updated retailer {retailer_id}, rows affected: {rowcount}")
                 return {
                     "success": True,
@@ -99,6 +125,13 @@ class RetailerManager:
             await self.db_manager.connect()
             rowcount = await self.db_manager.delete(Retailer, {"RetailerId": retailer_id})
             if rowcount:
+
+                # 🔁 SYNC
+                await sync_retailer(
+                    "delete",
+                    {"RetailerId": retailer_id}
+                )
+
                 logger.info(f"Deleted retailer {retailer_id}, rows affected: {rowcount}")
                 return {
                     "success": True,
@@ -113,5 +146,69 @@ class RetailerManager:
         except Exception as e:
             logger.error(f"Error deleting retailer {retailer_id}: {e}")
             return {"success": False, "message": f"Error deleting retailer: {e}"}
+        finally:
+            await self.db_manager.disconnect()
+
+
+    # ---------------- REGISTER ----------------
+    async def register(self, email: str, password: str) -> dict:
+        await self.db_manager.connect()
+        try:
+            # Check if email already exists
+            existing = await self.db_manager.read(Retailer, {"Email": email})
+            if existing:
+                return {"success": False, "message": "Email already registered"}
+
+            retailer = await self.db_manager.create(
+                Retailer,
+                {
+                    "Email": email,
+                    "PasswordHash": hash_password(password),
+                },
+            )
+
+            # 🔁 SYNC
+            await sync_retailer(
+                "register",
+                {
+                    "RetailerId": retailer.RetailerId,
+                    "Email": retailer.Email,
+                    "PasswordHash": retailer.PasswordHash,
+                }
+            )
+
+            return {
+                "success": True,
+                "message": "Registered successfully",
+                "data": {"RetailerId": retailer.RetailerId, "Email": retailer.Email},
+            }
+
+        except Exception as e:
+            logger.error(f"Error registering retailer: {e}")
+            return {"success": False, "message": f"Error registering retailer: {e}"}
+        finally:
+            await self.db_manager.disconnect()
+
+    # ---------------- LOGIN ----------------
+    async def login(self, email: str, password: str) -> dict:
+        await self.db_manager.connect()
+        try:
+            result = await self.db_manager.read(Retailer, {"Email": email})
+            if not result:
+                return {"success": False, "message": "Invalid credentials"}
+
+            retailer = result[0]
+            if retailer.PasswordHash != hash_password(password):
+                return {"success": False, "message": "Invalid credentials"}
+
+            return {
+                "success": True,
+                "message": "Login successful",
+                "data": {"RetailerId": retailer.RetailerId, "Email": retailer.Email},
+            }
+
+        except Exception as e:
+            logger.error(f"Error logging in retailer: {e}")
+            return {"success": False, "message": f"Error logging in retailer: {e}"}
         finally:
             await self.db_manager.disconnect()

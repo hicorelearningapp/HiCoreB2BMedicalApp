@@ -15,17 +15,17 @@ class RetailerInventoryAPI:
 
     def register_routes(self):
         # CRUD routes
-        self.router.post("/{retailer_id}/inventory")(self.create_inventory)
-        self.router.get("/{retailer_id}/inventory")(self.get_all_inventory)
-        self.router.get("/{retailer_id}/inventory/{inventory_id}")(self.get_inventory)
-        self.router.put("/{retailer_id}/inventory/{inventory_id}")(self.update_inventory)
-        self.router.delete("/{retailer_id}/inventory/{inventory_id}")(self.delete_inventory)
+        self.router.post("/retailer/{retailer_id}/inventory")(self.create_inventory)
+        self.router.get("/retailer/{retailer_id}/inventory")(self.get_all_inventory)
+        self.router.get("/retailer/{retailer_id}/inventory/{inventory_id}")(self.get_inventory)
+        self.router.put("/retailer/{retailer_id}/inventory/{inventory_id}")(self.update_inventory)
+        self.router.delete("/retailer/{retailer_id}/inventory/{inventory_id}")(self.delete_inventory)
 
         # Additional business routes
-        self.router.post("/{retailer_id}/inventory/{inventory_id}/reduce")(self.reduce_stock_after_order)
-        self.router.post("/{retailer_id}/inventory/{inventory_id}/increase")(self.increase_stock_after_return)
-        self.router.post("/{retailer_id}/inventory/{inventory_id}/add_from_distributor")(self.add_stock_from_distributor)
-        self.router.post("/{retailer_id}/inventory/mark_expired")(self.mark_expired_stock)
+        self.router.post("/retailer/{retailer_id}/inventory/{inventory_id}/reduce")(self.reduce_stock_after_order)
+        self.router.post("/retailer/{retailer_id}/inventory/{inventory_id}/increase")(self.increase_stock_after_return)
+        self.router.post("/retailer/{retailer_id}/inventory/{inventory_id}/add_from_distributor")(self.add_stock_from_distributor)
+        self.router.post("/retailer/{retailer_id}/inventory/mark_expired")(self.mark_expired_stock)
 
     # ------------------------------------------------------------------
     # CRUD Operations

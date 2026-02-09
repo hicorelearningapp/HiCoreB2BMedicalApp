@@ -14,12 +14,12 @@ class Distributor(Base):
     PasswordHash = Column(String, nullable=True)
 
     # Address fields (same as Retailer)
-    AddressLine1 = Column(String(255), nullable=False)
+    AddressLine1 = Column(String(255), nullable=True)
     AddressLine2 = Column(String(255), nullable=True)
-    City = Column(String(100), nullable=False)
-    State = Column(String(100), nullable=False)
-    Country = Column(String(100), nullable=False)
-    PostalCode = Column(String(20), nullable=False)
+    City = Column(String(100), nullable=True)
+    State = Column(String(100), nullable=True)
+    Country = Column(String(100), nullable=True)
+    PostalCode = Column(String(20), nullable=True)
     Latitude = Column(Float, nullable=True)
     Longitude = Column(Float, nullable=True)
 

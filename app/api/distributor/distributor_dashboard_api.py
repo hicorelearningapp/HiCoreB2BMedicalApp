@@ -9,7 +9,7 @@ class DistributorDashboardAPI:
         self.register_routes()
 
     def register_routes(self):
-        self.router.get("/distributor/{distributor_id}/dashboard/")(self.get_dashboard)
+        self.router.get("/distributor/{distributor_id}/dashboard")(self.get_dashboard)
 
     async def get_dashboard(self, distributor_id: int):
         try:

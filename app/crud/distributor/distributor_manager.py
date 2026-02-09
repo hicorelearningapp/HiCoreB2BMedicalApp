@@ -24,6 +24,9 @@ class DistributorManager:
             await self.db_manager.connect()
             data = distributor.dict()
             data["PasswordHash"] = hash_password(data.pop("Password"))
+            existing = await self.db_manager.read(Distributor, {"Email": data["Email"]})
+            if existing:
+                return {"success": False, "message": "Email already Exists"}
             obj = await self.db_manager.create(Distributor, data)
             logger.info(f"Created distributor {obj.DistributorId}")
             return {
@@ -104,5 +107,57 @@ class DistributorManager:
         except Exception as e:
             logger.error(f"Error deleting distributor: {e}")
             return {"success": False, "message": f"Error deleting distributor: {e}"}
+        finally:
+            await self.db_manager.disconnect()
+
+    # ---------------- REGISTER ----------------
+    async def register(self, email: str, password: str) -> dict:
+        await self.db_manager.connect()
+        try:
+            existing = await self.db_manager.read(Distributor, {"Email": email})
+            if existing:
+                return {"success": False, "message": "Email already registered"}
+
+            distributor = await self.db_manager.create(
+                Distributor,
+                {
+                    "Email": email,
+                    "PasswordHash": hash_password(password),
+                },
+            )
+
+            return {
+                "success": True,
+                "message": "Registered successfully",
+                "data": {"DistributorId": distributor.DistributorId, "Email": distributor.Email},
+            }
+
+        except Exception as e:
+            logger.error(f"Error registering distributor: {e}")
+            return {"success": False, "message": f"Error registering distributor: {e}"}
+        finally:
+            await self.db_manager.disconnect()
+
+    # ---------------- LOGIN ----------------
+    async def login(self, email: str, password: str) -> dict:
+        await self.db_manager.connect()
+        try:
+            result = await self.db_manager.read(Distributor, {"Email": email})
+            if not result:
+                return {"success": False, "message": "Invalid credentials"}
+
+            distributor = result[0]
+            if distributor.PasswordHash != hash_password(password):
+                return {"success": False, "message": "Invalid credentials"}
+
+            return {
+                "success": True,
+                "message": "Login successful",
+                "data": {"DistributorId": distributor.DistributorId, "Email": distributor.Email},
+            }
+
+        except Exception as e:
+            logger.error(f"Error logging in distributor: {e}")
+            return {"success": False, "message": f"Error logging in distributor: {e}"}
         finally:
             await self.db_manager.disconnect()

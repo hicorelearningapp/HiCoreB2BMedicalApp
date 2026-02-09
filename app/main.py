@@ -75,7 +75,7 @@ app.include_router(customer_order_api.router, tags=["Customer Order Api"])
 
 # Retailer
 # app.include_router(retailer_dashboard_api.router, tags=["Retailer Dashboard"])
-# app.include_router(retailer_inventory_api.router, tags=["Retailer Inventory"])
+app.include_router(retailer_inventory_api.router, tags=["Retailer Inventory"])
 app.include_router(retailer_order_api.router, tags=["Retailer Orders"])
 app.include_router(retailer_order_item_api.router, tags=["Retailer Order Items"])
 app.include_router(customer_invoice_api.router, tags=["Retailer Invoices"])
@@ -88,7 +88,7 @@ app.include_router(retailer_notification_api.router, tags=["Retailer Notificatio
 # Distributor
 app.include_router(distributor_api.router, tags=["Distributor"])
 app.include_router(distributor_notification_api.router, tags=["Distributor Notification"])
-# app.include_router(distributor_inventory_api.router, tags=["Distributor Inventory"])
+app.include_router(distributor_inventory_api.router, tags=["Distributor Inventory"])
 # app.include_router(distributor_order_api.router, tags=["Distributor Orders"])
 app.include_router(retailer_invoice_api.router, tags=["Distributor Invoices"])
 app.include_router(distributor_report_api.router, tags=["Distributor Report"])

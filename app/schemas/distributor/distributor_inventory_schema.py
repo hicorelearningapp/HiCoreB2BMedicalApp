@@ -18,10 +18,7 @@ class DistributorInventoryBase(BaseModel):
         from_attributes = True
 
 class DistributorInventoryCreate(DistributorInventoryBase):
-    DistributorId: int
-    MedicineName: str
-    Price: float
-    Quantity: int
+    pass
 
 class DistributorInventoryUpdate(DistributorInventoryBase):
     pass

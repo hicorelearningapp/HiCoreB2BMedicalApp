@@ -1,31 +1,34 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from typing import Optional
 
 class RetailerBase(BaseModel):
-    ShopName: Optional[str]
-    OwnerName: Optional[str]
-    GSTNumber: Optional[str]
-    LicenseNumber: Optional[str]
-    PhoneNumber: Optional[str]
-    Email: Optional[str]
+    ShopName: Optional[str] = None
+    OwnerName: Optional[str] = None
+    GSTNumber: Optional[str] = None
+    LicenseNumber: Optional[str] = None
+    PhoneNumber: Optional[str] = None
+    Email: Optional[str] = None
+    
 
     # Address
-    AddressLine1: str
-    AddressLine2: Optional[str]
-    City: str
-    State: str
-    Country: str
-    PostalCode: str
-    Latitude: Optional[float]
-    Longitude: Optional[float]
+    AddressLine1: Optional[str] = None
+    AddressLine2: Optional[str] = None
+    City: Optional[str] = None
+    State: Optional[str] = None
+    Country: Optional[str] = None
+    PostalCode: Optional[str] = None
+    Latitude: Optional[float] = None
+    Longitude: Optional[float] = None
 
-    ShopPic: Optional[str]
+    ShopPic: Optional[str] = None
 
     # Banking info
-    BankName: Optional[str]
-    AccountNumber: Optional[str]
-    IFSCCode: Optional[str]
-    Branch: Optional[str]
+    BankName: Optional[str] = None
+    AccountNumber: Optional[str] = None
+    IFSCCode: Optional[str] = None
+    Branch: Optional[str] = None
+
+    IsRegistered: Optional[bool] = None
 
     class Config:
         from_attributes = True
@@ -37,8 +40,18 @@ class RetailerCreate(RetailerBase):
 
 
 class RetailerUpdate(RetailerBase):
-    pass
+    Password: Optional[str] = None
 
 
 class RetailerRead(RetailerBase):
     RetailerId: int
+    # PasswordHash: Optional[str]
+
+
+class RetailerRegisterSchema(BaseModel):
+    Email: str
+    Password: str
+
+class RetailerLoginSchema(BaseModel):
+    Email: str
+    Password: str
