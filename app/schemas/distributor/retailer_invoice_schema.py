@@ -8,7 +8,7 @@ class RetailerInvoiceItemBase(BaseModel):
     OrderId: Optional[int]
     DistributorId: Optional[int]
     MedicineName: Optional[str]
-    Brand: Optional[str]
+    # Brand: Optional[str]
     Quantity: Optional[int]
     Price: Optional[float]
     TotalAmount: Optional[float]
