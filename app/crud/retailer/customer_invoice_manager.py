@@ -1,6 +1,8 @@
 from typing import List, Optional
+import httpx
 from ...utils.timezone import ist_now
 from ...db.base.database_manager import DatabaseManager
+from ...models.retailer.retailer_model import Retailer
 from ...models.retailer.customer_invoice_model import CustomerInvoice, CustomerInvoiceItem
 from ...schemas.retailer.customer_invoice_schema import (
     CustomerInvoiceCreate,
@@ -8,6 +10,10 @@ from ...schemas.retailer.customer_invoice_schema import (
     CustomerInvoiceRead,
 )
 
+
+# Local
+GET_ORDER_BASE_URL = "http://127.0.0.1:8000/orders/"
+GET_CUSTOMER_BASE_URL = "http://127.0.0.1:8000/customers/"
 
 class CustomerInvoiceManager:
     def __init__(self, db_type: str):
@@ -39,19 +45,115 @@ class CustomerInvoiceManager:
         finally:
             await self.db_manager.disconnect()
 
+
     async def get_invoice(self, invoice_id: int) -> dict:
         await self.db_manager.connect()
         try:
+            # -----------------------------
+            # Fetch Invoice
+            # -----------------------------
             invoices = await self.db_manager.read(CustomerInvoice, {"InvoiceId": invoice_id})
             if not invoices:
                 return {"success": False, "message": "Invoice not found"}
 
             invoice = invoices[0]
-            items = await self.db_manager.read(CustomerInvoiceItem, {"InvoiceId": invoice_id})
-            invoice_schema = CustomerInvoiceRead.from_orm(invoice).dict()
-            invoice_schema["Items"] = [item.__dict__ for item in items]
 
-            return invoice_schema
+            order = None
+            customer = None
+
+            async with httpx.AsyncClient() as client:
+
+                # -----------------------------
+                # Fetch Order from API
+                # -----------------------------
+                order_url = f"{GET_ORDER_BASE_URL}{invoice.OrderId}"
+                order_resp = await client.get(order_url)
+
+                if order_resp.status_code == 200:
+                    order = order_resp.json()
+                    customer = order.get("Customer")
+
+            # -----------------------------
+            # Fetch Retailer from DB
+            # -----------------------------
+            retailers = await self.db_manager.read(Retailer, {"RetailerId": invoice.RetailerId})
+            retailer = retailers[0] if retailers else None
+
+            # -----------------------------
+            # Build Item List (from Order API)
+            # -----------------------------
+            item_list = []
+            total_amount = 0
+
+            if order and order.get("Items"):
+                for item in order["Items"]:
+                    gst_rate = 5
+
+                    base_amount = (item.get("Price", 0)) * (item.get("Quantity", 0))
+                    gst_amount = (base_amount * gst_rate) / 100
+                    total = base_amount + gst_amount
+
+                    total_amount += total
+
+                    item_list.append({
+                        "ItemId": item.get("OrderItemId"),
+                        "Medicine": item.get("MedicineName"),
+                        "Quantity": item.get("Quantity"),
+                        "UnitPrice": item.get("Price"),
+                        "GST": "5%",
+                        "GSTAmount": round(gst_amount, 2),
+                        "Total": round(total, 2)
+                    })
+
+            # -----------------------------
+            # Build Invoice Response
+            # -----------------------------
+            response = {
+                "InvoiceNo": f"INV-{invoice.InvoiceDate.year}-{invoice.InvoiceId}",
+
+                "CustomerDetails": {
+                    "Name": order.get("CustomerName") if order else None,
+                    "Address": f"{customer.get('AddressLine1')}, {customer.get('City')}, {customer.get('State')} - {customer.get('PostalCode')}" if customer else None,
+                    "Contact": customer.get("PhoneNumber") if customer else None,
+                    "Email": customer.get("Email") if customer else None,
+                    "OrderID": f"ORD-{invoice.OrderId}",
+                    "OrderDate": order.get("OrderDateTime") if order else None,
+                    "ExpectedDelivery": order.get("ExpectedDelivery") if order else None
+                },
+
+                "OrderSummary": {
+                    "Items": item_list,
+                    "TotalAmount": round(total_amount, 2)
+                },
+
+                "PaymentAndDelivery": {
+                    "PaymentMode": invoice.PaymentMode,
+                    "PaymentStatus": invoice.PaymentStatus,
+                    "DeliveryMethod": order.get("DeliveryMode") if order else None,
+                    "DeliveryPartner": order.get("DeliveryService") if order else None
+                },
+
+                "RetailerDetails": {
+                    "ShopName": retailer.ShopName if retailer else None,
+                    "RetailerName": retailer.OwnerName if retailer else None,
+                    "Address": f"{retailer.AddressLine1}, {retailer.City}, {retailer.State}" if retailer else None,
+                    "LicenseNo": retailer.LicenseNumber if retailer else None,
+                    "GSTIN": retailer.GSTNumber if retailer else None,
+                    "Support": {
+                        "Phone": retailer.PhoneNumber if retailer else None,
+                        "Email": retailer.Email if retailer else None
+                    }
+                },
+
+                "FooterNotes": [
+                    "All medicines are sold under valid license and verified prescriptions.",
+                    "Prices include applicable taxes (GST @5%).",
+                    "For replacement or issues, contact support within 24 hours of delivery."
+                ]
+            }
+
+            return response
+
         finally:
             await self.db_manager.disconnect()
 
