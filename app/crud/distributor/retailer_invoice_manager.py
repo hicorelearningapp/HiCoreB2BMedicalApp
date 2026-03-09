@@ -1,6 +1,9 @@
 from typing import List, Optional
 from ...utils.timezone import ist_now
 from ...db.base.database_manager import DatabaseManager
+from ...models.retailer.retailer_model import Retailer
+from ...models.distributor.distributor_model import Distributor
+from ...models.retailer.retailer_order_model import RetailerOrder
 from ...models.distributor.retailer_invoice_model import RetailerInvoice, RetailerInvoiceItem
 from ...schemas.distributor.retailer_invoice_schema import (
     RetailerInvoiceCreate,
@@ -47,11 +50,87 @@ class RetailerInvoiceManager:
                 return {"success": False, "message": "Invoice not found"}
 
             invoice = invoices[0]
-            items = await self.db_manager.read(RetailerInvoiceItem, {"InvoiceId": invoice_id})
-            invoice_schema = RetailerInvoiceRead.from_orm(invoice).dict()
-            invoice_schema["Items"] = [item.__dict__ for item in items]
 
-            return invoice_schema
+            # Fetch order
+            orders = await self.db_manager.read(RetailerOrder, {"OrderId": invoice.OrderId})
+            order = orders[0] if orders else None
+
+            # Fetch retailer
+            retailers = await self.db_manager.read(Retailer, {"RetailerId": order.RetailerId}) if order else []
+            retailer = retailers[0] if retailers else None
+
+            # Fetch distributor
+            distributors = await self.db_manager.read(Distributor, {"DistributorId": invoice.DistributorId})
+            distributor = distributors[0] if distributors else None
+
+            # Fetch invoice items
+            items = await self.db_manager.read(RetailerInvoiceItem, {"InvoiceId": invoice_id})
+
+            item_list = []
+            total_amount = 0
+
+            for item in items:
+                gst_rate = 5
+                gst_amount = ((item.Price or 0) * gst_rate) / 100
+                total = (item.Price or 0) * (item.Quantity or 0) + gst_amount
+
+                total_amount += total
+
+                item_list.append({
+                    "ItemId": item.ItemId,
+                    "Medicine": item.MedicineName,
+                    "Quantity": item.Quantity,
+                    "UnitPrice": item.Price,
+                    "GST": "5%",
+                    "GSTAmount": round(gst_amount, 2),
+                    "Total": round(total, 2)
+                })
+
+            response = {
+                "InvoiceNo": f"INV-{invoice.InvoiceDate.year}-{invoice.InvoiceId}",
+
+                "RetailerDetails": {
+                    "Name": retailer.OwnerName if retailer else None,
+                    "Address": f"{retailer.AddressLine1}, {retailer.City}, {retailer.State} - {retailer.PostalCode}" if retailer else None,
+                    "Contact": retailer.PhoneNumber if retailer else None,
+                    "Email": retailer.Email if retailer else None,
+                    "OrderID": f"ORD-{invoice.OrderId}",
+                    "OrderDate": order.OrderDateTime.strftime("%d/%m/%Y") if order else None,
+                    "ExpectedDelivery": order.ExpectedDelivery.strftime("%d/%m/%Y") if order and order.ExpectedDelivery else None
+                },
+
+                "OrderSummary": {
+                    "Items": item_list,
+                    "TotalAmount": round(total_amount, 2)
+                },
+
+                "PaymentAndDelivery": {
+                    "PaymentMode": invoice.PaymentMode,
+                    "PaymentStatus": invoice.PaymentStatus,
+                    "DeliveryMethod": order.DeliveryMode if order else None,
+                    "DeliveryPartner": order.DeliveryService if order else None
+                },
+
+                "DistributorDetails": {
+                    "DistributorName": distributor.CompanyName if distributor else None,
+                    "Address": f"{distributor.AddressLine1}, {distributor.City}, {distributor.State}" if distributor else None,
+                    "LicenseNo": distributor.LicenseNumber if distributor else None,
+                    "GSTIN": distributor.GSTNumber if distributor else None,
+                    "Support": {
+                        "Phone": distributor.PhoneNumber if distributor else None,
+                        "Email": distributor.Email if distributor else None
+                    }
+                },
+
+                "FooterNotes": [
+                    "All medicines are sold under valid license and verified prescriptions.",
+                    "Prices include applicable taxes (GST @5%).",
+                    "For replacement or issues, contact support within 24 hours of delivery."
+                ]
+            }
+
+            return response
+
         finally:
             await self.db_manager.disconnect()
 

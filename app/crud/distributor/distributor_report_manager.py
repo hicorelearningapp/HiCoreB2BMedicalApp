@@ -28,7 +28,7 @@ class DistributorReportManager:
             # ---------------------------
             # Revenue & average order value
             # ---------------------------
-            total_revenue = sum(ord.Amount or 0 for ord in orders)
+            total_revenue = sum(ord.TotalAmount or 0 for ord in orders)
             total_orders = len(orders)
             avg_order_value = total_revenue / total_orders if total_orders > 0 else 0
 
@@ -40,7 +40,7 @@ class DistributorReportManager:
 
             for ord in orders:
                 month_name = ord.OrderDateTime.strftime("%b")
-                sales_trend_dict[month_name] += ord.Amount or 0
+                sales_trend_dict[month_name] += ord.TotalAmount or 0
                 order_volume_dict[month_name] += 1
 
             all_months = [calendar.month_abbr[i] for i in range(1, 13)]
