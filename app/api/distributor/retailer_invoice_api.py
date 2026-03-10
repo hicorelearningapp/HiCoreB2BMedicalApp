@@ -3,6 +3,10 @@ from typing import Optional
 from ...schemas.distributor.retailer_invoice_schema import RetailerInvoiceCreate, RetailerInvoiceUpdate
 from ...crud.distributor.retailer_invoice_manager import RetailerInvoiceManager
 from ...config import settings
+from xhtml2pdf import pisa
+import io
+from fastapi.responses import StreamingResponse
+from jinja2 import Environment, FileSystemLoader
 
 
 class RetailerInvoiceAPI:
@@ -18,6 +22,7 @@ class RetailerInvoiceAPI:
         self.router.put("/distributor/invoices/{invoice_id}")(self.update_invoice)
         self.router.delete("/distributor/invoices/{invoice_id}")(self.delete_invoice)
         self.router.delete("/distributor/{distributor_id}/invoices")(self.delete_all_invoices)
+        self.router.get("/distributor/invoices/{invoice_id}/pdf")(self.generate_invoice_pdf)
 
 
     # -----------------------------
@@ -72,5 +77,35 @@ class RetailerInvoiceAPI:
     async def delete_all_invoices(self, distributor_id: int):
         try:
             return await self.crud.delete_all_invoices(distributor_id)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+        
+
+    async def generate_invoice_pdf(self, invoice_id: int):
+
+        try:
+            invoice = await self.crud.get_invoice(invoice_id)
+
+            if not invoice:
+                raise HTTPException(status_code=404, detail="Invoice not found")
+
+            env = Environment(loader=FileSystemLoader("templates"))
+            template = env.get_template("invoice_template.html")
+
+            html = template.render(invoice=invoice)
+
+            pdf_buffer = io.BytesIO()
+            pisa.CreatePDF(io.StringIO(html), dest=pdf_buffer)
+
+            pdf_buffer.seek(0)
+
+            return StreamingResponse(
+                pdf_buffer,
+                media_type="application/pdf",
+                headers={
+                    "Content-Disposition": f"attachment; filename=invoice_{invoice_id}.pdf"
+                }
+            )
+
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))

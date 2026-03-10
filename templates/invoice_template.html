@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+
+body{
+font-family: Arial, sans-serif;
+font-size:12px;
+color:#333;
+}
+
+.container{
+width:100%;
+border:1px solid #ddd;
+padding:20px;
+}
+
+.header{
+border-bottom:2px solid #2e7d32;
+padding-bottom:10px;
+}
+
+.logo{
+font-size:22px;
+font-weight:bold;
+color:#2e7d32;
+}
+
+.invoice-title{
+font-size:18px;
+font-weight:bold;
+margin-top:10px;
+}
+
+.section{
+border:1px solid #ddd;
+padding:10px;
+margin-top:15px;
+}
+
+.section-title{
+font-weight:bold;
+color:#2e7d32;
+margin-bottom:8px;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:10px;
+}
+
+th{
+background:#f2f2f2;
+border:1px solid #ccc;
+padding:6px;
+text-align:left;
+}
+
+td{
+border:1px solid #ccc;
+padding:6px;
+}
+
+.total{
+text-align:right;
+font-size:14px;
+font-weight:bold;
+margin-top:10px;
+}
+
+.footer{
+text-align:center;
+margin-top:20px;
+color:#2e7d32;
+font-weight:bold;
+}
+
+.notes{
+margin-top:10px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<!-- HEADER -->
+
+<div class="header">
+<div class="logo">HealthPlus</div>
+<div class="invoice-title">Invoice / Bill of Sale</div>
+
+<p>
+<b>Invoice No:</b> {{invoice.InvoiceNo}}
+</p>
+</div>
+
+<!-- RETAILER DETAILS -->
+
+<div class="section">
+
+<div class="section-title">Retailer Details</div>
+
+<b>{{invoice.RetailerDetails.Name}}</b><br>
+{{invoice.RetailerDetails.Address}}<br>
+Contact: {{invoice.RetailerDetails.Contact}}<br>
+Email: {{invoice.RetailerDetails.Email}}<br><br>
+
+<b>Order ID:</b> {{invoice.RetailerDetails.OrderID}}<br>
+<b>Order Date:</b> {{invoice.RetailerDetails.OrderDate}}<br>
+<b>Expected Delivery:</b> {{invoice.RetailerDetails.ExpectedDelivery}}
+
+</div>
+
+<!-- ORDER SUMMARY -->
+
+<div class="section">
+
+<div class="section-title">Order Summary</div>
+
+<table>
+
+<tr>
+<th>S.No</th>
+<th>Medicine</th>
+<th>Quantity</th>
+<th>Unit Price</th>
+<th>GST</th>
+<th>Total</th>
+</tr>
+
+{% for item in invoice.OrderSummary.Items %}
+
+<tr>
+<td>{{loop.index}}</td>
+<td>{{item.Medicine}}</td>
+<td>{{item.Quantity}}</td>
+<td>₹{{item.UnitPrice}}</td>
+<td>{{item.GST}}</td>
+<td>₹{{item.Total}}</td>
+</tr>
+
+{% endfor %}
+
+</table>
+
+<div class="total">
+Total: ₹{{invoice.OrderSummary.TotalAmount}}
+</div>
+
+</div>
+
+<!-- PAYMENT -->
+
+<div class="section">
+
+<div class="section-title">Payment & Delivery</div>
+
+<b>Payment Mode:</b> {{invoice.PaymentAndDelivery.PaymentMode}} <br>
+<b>Payment Status:</b> {{invoice.PaymentAndDelivery.PaymentStatus}} <br>
+<b>Delivery Method:</b> {{invoice.PaymentAndDelivery.DeliveryMethod}} <br>
+<b>Delivery Partner:</b> {{invoice.PaymentAndDelivery.DeliveryPartner}}
+
+</div>
+
+<!-- NOTES -->
+
+<div class="section">
+
+<div class="section-title">Notes</div>
+
+<div class="notes">
+
+{% for note in invoice.FooterNotes %}
+
+• {{note}} <br>
+
+{% endfor %}
+
+</div>
+
+</div>
+
+<!-- DISTRIBUTOR -->
+
+<div class="section">
+
+<div class="section-title">Distributor Details</div>
+
+<b>{{invoice.DistributorDetails.DistributorName}}</b><br>
+{{invoice.DistributorDetails.Address}}<br>
+License No: {{invoice.DistributorDetails.LicenseNo}}<br>
+GSTIN: {{invoice.DistributorDetails.GSTIN}}<br>
+
+Support: {{invoice.DistributorDetails.Support.Phone}} | {{invoice.DistributorDetails.Support.Email}}
+
+</div>
+
+<!-- FOOTER -->
+
+<div class="footer">
+
+Thank you for choosing HealthPlus! <br>
+Stay Healthy. Stay Safe.
+
+</div>
+
+</div>
+
+</body>
+</html>
