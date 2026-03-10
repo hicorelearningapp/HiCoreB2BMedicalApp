@@ -12,8 +12,12 @@ from ...schemas.retailer.customer_invoice_schema import (
 
 
 # Local
-GET_ORDER_BASE_URL = "http://127.0.0.1:8000/orders/"
-GET_CUSTOMER_BASE_URL = "http://127.0.0.1:8000/customers/"
+# GET_ORDER_BASE_URL = "http://127.0.0.1:8000/orders/"
+# GET_CUSTOMER_BASE_URL = "http://127.0.0.1:8000/customers/"
+
+# Prod
+GET_ORDER_BASE_URL = "http://151.185.41.194:8000/orders/"
+GET_CUSTOMER_BASE_URL = "http://151.185.41.194:8000/customers/"
 
 class CustomerInvoiceManager:
     def __init__(self, db_type: str):
